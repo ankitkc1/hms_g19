@@ -1,0 +1,28 @@
+{
+  "name": "hms-server",
+  "version": "1.0.0",
+  "description": "Hospital Management System backend server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js"
+  },
+  "keywords": [
+    "hospital",
+    "management",
+    "express",
+    "mongodb",
+    "mongoose"
+  ],
+  "author": "ANKC",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "mongoose": "^8.9.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}
