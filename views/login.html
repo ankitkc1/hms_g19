@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Login | HMS</title>
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+  />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body class="auth-page">
+  <main class="auth-wrapper">
+    <div class="card auth-card z-depth-3">
+      <div class="card-content">
+        <h4 class="center-align">Hospital Management System</h4>
+        <p class="center-align grey-text text-darken-1">
+          Secure login for staff and patients
+        </p>
+
+        <div id="messageBox" class="message-box hide"></div>
+
+        <form id="loginForm" novalidate>
+          <div class="input-field">
+            <i class="material-icons prefix">email</i>
+            <input id="email" name="email" type="email" autocomplete="email" />
+            <label for="email">Email</label>
+            <span id="emailError" class="helper-text red-text"></span>
+          </div>
+
+          <div class="input-field">
+            <i class="material-icons prefix">lock</i>
+            <input id="password" name="password" type="password" autocomplete="current-password" />
+            <label for="password">Password</label>
+            <span id="passwordError" class="helper-text red-text"></span>
+          </div>
+
+          <button id="loginButton" class="btn waves-effect waves-light full-width" type="submit">
+            Login
+            <i class="material-icons right">login</i>
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/login.js"></script>
+</body>
+</html>

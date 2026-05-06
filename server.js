@@ -2,31 +2,62 @@ require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
+
 const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes');
+const { ensureAuthenticated } = require('./middleware/authMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Connect database
 connectDB();
 
-// Middleware
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
-// EJS setup
-app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '../client/views'));
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Static files
-app.use(express.static(path.join(__dirname, '../client/public')));
+app.use(
+  session({
+    name: 'hms.sid',
+    secret: process.env.SESSION_SECRET || 'dev_secret_change_me',
+    resave: false,
+    saveUninitialized: false,
+    rolling: true,
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGO_URI,
+      collectionName: 'sessions',
+      ttl: 30 * 60
+    }),
+    cookie: {
+      httpOnly: true,
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      maxAge: 1000 * 60 * 30
+    }
+  })
+);
 
-// Basic test route
 app.get('/', (req, res) => {
-  res.send('HMS server is running successfully');
+  if (req.session.user) {
+    return res.redirect('/dashboard');
+  }
+
+  return res.redirect('/login');
 });
 
-// Start server
+app.use('/', authRoutes);
+
+app.get('/dashboard', ensureAuthenticated, (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'dashboard.html'));
+});
+
+app.use((req, res) => {
+  res.status(404).send('Page not found');
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
