@@ -7,7 +7,10 @@ const MongoStore = require('connect-mongo');
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
+const dashboardRoutes = require('./routes/dashboard');
+
 const { ensureAuthenticated } = require('./middleware/authMiddleware');
+const allowRoles = require('./middleware/rolesMiddleware');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -49,10 +52,45 @@ app.get('/', (req, res) => {
 });
 
 app.use('/', authRoutes);
+app.use('/dashboard', dashboardRoutes);
 
-app.get('/dashboard', ensureAuthenticated, (req, res) => {
-  res.sendFile(path.join(__dirname, 'views', 'dashboard.html'));
-});
+// Temporary protected routes for testing US03 role-based access.
+// These can be replaced later when US05 patient pages are built.
+app.get(
+  '/patients',
+  ensureAuthenticated,
+  allowRoles('admin', 'reception', 'doctor', 'nurse'),
+  (req, res) => {
+    res.send('Patients page');
+  }
+);
+
+app.get(
+  '/patients/new',
+  ensureAuthenticated,
+  allowRoles('admin', 'reception'),
+  (req, res) => {
+    res.send('Register patient page');
+  }
+);
+
+app.get(
+  '/staff',
+  ensureAuthenticated,
+  allowRoles('admin'),
+  (req, res) => {
+    res.send('Staff management page');
+  }
+);
+
+app.get(
+  '/profile',
+  ensureAuthenticated,
+  allowRoles('patient'),
+  (req, res) => {
+    res.send('Patient profile page');
+  }
+);
 
 app.use((req, res) => {
   res.status(404).send('Page not found');

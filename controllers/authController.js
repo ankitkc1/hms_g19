@@ -21,6 +21,17 @@ function validateLoginInput(email, password) {
   return errors;
 }
 
+function getDashboardUrl(role) {
+  if (role === 'admin') return '/dashboard/admin';
+  if (role === 'reception') return '/dashboard/reception';
+  if (role === 'doctor') return '/dashboard/doctor';
+  if (role === 'nurse') return '/dashboard/nurse';
+  if (role === 'patient') return '/dashboard/patient';
+
+  return '/dashboard';
+}
+
+
 async function login(req, res) {
   const email = String(req.body.email || '').trim().toLowerCase();
   const password = String(req.body.password || '');
@@ -71,7 +82,8 @@ async function login(req, res) {
       return res.status(200).json({
         success: true,
         message: 'Login successful.',
-        redirectUrl: '/dashboard'
+        redirectUrl: getDashboardUrl(user.role)
+
       });
     });
   } catch (error) {

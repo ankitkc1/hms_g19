@@ -1,6 +1,14 @@
 const userInfo = document.getElementById('userInfo');
 const logoutButton = document.getElementById('logoutButton');
 
+function updateNavigation(role) {
+  document.querySelectorAll('.role-link').forEach((item) => {
+    const allowedRoles = item.dataset.roles.split(',');
+    item.style.display = allowedRoles.includes(role) ? '' : 'none';
+  });
+}
+
+
 async function loadCurrentUser() {
   try {
     const response = await fetch('/me');
@@ -12,6 +20,8 @@ async function loadCurrentUser() {
     }
 
     userInfo.textContent = `Logged in as ${data.user.email} (${data.user.role})`;
+    updateNavigation(data.user.role);
+
   } catch (error) {
     userInfo.textContent = 'Unable to load user details.';
   }
