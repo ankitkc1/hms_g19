@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Register Patient | HMS</title>
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+  />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <nav class="teal darken-2">
+    <div class="nav-wrapper container">
+      <a href="/dashboard" class="brand-logo">HMS</a>
+
+      <ul class="right">
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/patients/new">Register Patient</a></li>
+        <li>
+          <button id="logoutButton" class="btn red darken-1 waves-effect waves-light">
+            Logout
+            <i class="material-icons right">logout</i>
+          </button>
+        </li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container dashboard-container">
+    <div class="card z-depth-2">
+      <div class="card-content">
+        <span class="card-title">Register New Patient</span>
+
+        <p id="resultMessage" class="green-text text-darken-2"></p>
+
+        <form id="patientForm" novalidate>
+          <div class="row">
+            <div class="input-field col s12 m6">
+              <input id="firstName" name="firstName" type="text" />
+              <label for="firstName">First Name *</label>
+              <span id="firstNameError" class="helper-text red-text"></span>
+            </div>
+
+            <div class="input-field col s12 m6">
+              <input id="lastName" name="lastName" type="text" />
+              <label for="lastName">Last Name *</label>
+              <span id="lastNameError" class="helper-text red-text"></span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="input-field col s12 m6">
+              <input id="dateOfBirth" name="dateOfBirth" type="date" />
+              <label for="dateOfBirth" class="active">Date of Birth *</label>
+              <span id="dateOfBirthError" class="helper-text red-text"></span>
+            </div>
+
+            <div class="input-field col s12 m6">
+              <select id="gender" name="gender">
+                <option value="" disabled selected>Choose gender</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="other">Other</option>
+              </select>
+              <label>Gender *</label>
+              <span id="genderError" class="helper-text red-text"></span>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="input-field col s12 m6">
+              <input id="phone" name="phone" type="tel" />
+              <label for="phone">Phone *</label>
+              <span id="phoneError" class="helper-text red-text"></span>
+            </div>
+
+            <div class="input-field col s12 m6">
+              <input id="email" name="email" type="email" />
+              <label for="email">Email</label>
+              <span id="emailError" class="helper-text red-text"></span>
+            </div>
+          </div>
+
+          <div class="input-field">
+            <textarea id="address" name="address" class="materialize-textarea"></textarea>
+            <label for="address">Address *</label>
+            <span id="addressError" class="helper-text red-text"></span>
+          </div>
+
+          <div class="row">
+            <div class="input-field col s12 m6">
+              <input id="emergencyContactName" name="emergencyContactName" type="text" />
+              <label for="emergencyContactName">Emergency Contact Name *</label>
+              <span id="emergencyContactNameError" class="helper-text red-text"></span>
+            </div>
+
+            <div class="input-field col s12 m6">
+              <input id="emergencyContactPhone" name="emergencyContactPhone" type="tel" />
+              <label for="emergencyContactPhone">Emergency Contact Phone *</label>
+              <span id="emergencyContactPhoneError" class="helper-text red-text"></span>
+            </div>
+          </div>
+
+          <button id="submitButton" class="btn waves-effect waves-light" type="submit">
+            Register Patient
+            <i class="material-icons right">person_add</i>
+          </button>
+
+          <a href="/dashboard" class="btn-flat">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script src="/js/patient-create.js"></script>
+</body>
+</html>

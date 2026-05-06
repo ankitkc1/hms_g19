@@ -8,6 +8,7 @@ const MongoStore = require('connect-mongo');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboard');
+const patientRoutes = require('./routes/patients');
 
 const { ensureAuthenticated } = require('./middleware/authMiddleware');
 const allowRoles = require('./middleware/rolesMiddleware');
@@ -53,26 +54,7 @@ app.get('/', (req, res) => {
 
 app.use('/', authRoutes);
 app.use('/dashboard', dashboardRoutes);
-
-// Temporary protected routes for testing US03 role-based access.
-// These can be replaced later when US05 patient pages are built.
-app.get(
-  '/patients',
-  ensureAuthenticated,
-  allowRoles('admin', 'reception', 'doctor', 'nurse'),
-  (req, res) => {
-    res.send('Patients page');
-  }
-);
-
-app.get(
-  '/patients/new',
-  ensureAuthenticated,
-  allowRoles('admin', 'reception'),
-  (req, res) => {
-    res.send('Register patient page');
-  }
-);
+app.use('/patients', patientRoutes);
 
 app.get(
   '/staff',
