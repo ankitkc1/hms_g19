@@ -41,7 +41,7 @@ async function login(req, res) {
     if (!user) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password.'
+        message: 'Email is not registered'
       });
     }
 
@@ -50,7 +50,7 @@ async function login(req, res) {
     if (!passwordMatches) {
       return res.status(401).json({
         success: false,
-        message: 'Invalid email or password.'
+        message: 'Please enter a valid password'
       });
     }
 
