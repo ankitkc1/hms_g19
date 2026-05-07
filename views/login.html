@@ -24,20 +24,19 @@
 
         <div id="messageBox" class="message-box hide"></div>
 
-        <form id="loginForm" novalidate>
-          <div class="input-field">
-            <i class="material-icons prefix">email</i>
-            <input id="email" name="email" type="email" autocomplete="email" />
-            <label for="email">Email</label>
-            <span id="emailError" class="helper-text red-text"></span>
-          </div>
+        <div class="input-field">
+          <i class="material-icons prefix">email</i>
+          <input id="email" name="email" type="email" autocomplete="email" />
+          <label id="emailLabel" for="email">Email</label>
+          <span id="emailError" class="helper-text red-text"></span>
+        </div>
 
-          <div class="input-field">
-            <i class="material-icons prefix">lock</i>
-            <input id="password" name="password" type="password" autocomplete="current-password" />
-            <label for="password">Password</label>
-            <span id="passwordError" class="helper-text red-text"></span>
-          </div>
+        <div class="input-field">
+          <i class="material-icons prefix">lock</i>
+          <input id="password" name="password" type="password" autocomplete="current-password" />
+          <label id="passwordLabel" for="password">Password</label>
+          <span id="passwordError" class="helper-text red-text"></span>
+        </div>
 
           <button id="loginButton" class="btn waves-effect waves-light full-width" type="submit">
             Login
