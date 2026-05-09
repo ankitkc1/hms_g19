@@ -31,6 +31,13 @@ router.get(
   appointmentController.getAppointmentOptions
 );
 
+router.get(
+  '/availability',
+  ensureAuthenticated,
+  allowRoles('admin', 'reception'),
+  appointmentController.getDoctorAvailability
+);
+
 router.post(
   '/',
   ensureAuthenticated,

@@ -40,7 +40,7 @@ const appointmentSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-//Database-level protection against same doctor + same date/time booking
+// Database-level protection against the same doctor being booked twice in one slot.
 appointmentSchema.index(
   { doctor: 1, appointmentDate: 1 },
   { unique: true }

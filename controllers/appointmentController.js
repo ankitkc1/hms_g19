@@ -4,6 +4,9 @@ const Appointment = require('../models/Appointment');
 const Patient = require('../models/Patient');
 const User = require('../models/User');
 
+const APPOINTMENT_SLOT_MINUTES = 15;
+const APPOINTMENT_SLOT_MS = APPOINTMENT_SLOT_MINUTES * 60 * 1000;
+
 function getAppointmentsPage(req, res) {
   return res.sendFile(path.join(__dirname, '..', 'views', 'appointments', 'index.html'));
 }
@@ -21,6 +24,58 @@ function normaliseAppointmentDate(value) {
 
   date.setSeconds(0, 0);
   return date;
+}
+
+function isValidAppointmentSlot(date) {
+  return date.getMinutes() % APPOINTMENT_SLOT_MINUTES === 0;
+}
+
+function getDayRange(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(String(value || ''))) {
+    return null;
+  }
+
+  const start = new Date(`${value}T00:00`);
+
+  if (Number.isNaN(start.getTime())) {
+    return null;
+  }
+
+  const end = new Date(start);
+  end.setDate(end.getDate() + 1);
+
+  return { start, end };
+}
+
+function formatSlotTime(date) {
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+
+  return `${hours}:${minutes}`;
+}
+
+function getUnavailableSlotsForDay(appointments, dayRange) {
+  const unavailableTimes = new Set();
+
+  for (
+    let slotStart = new Date(dayRange.start);
+    slotStart < dayRange.end;
+    slotStart = new Date(slotStart.getTime() + APPOINTMENT_SLOT_MS)
+  ) {
+    const slotEnd = new Date(slotStart.getTime() + APPOINTMENT_SLOT_MS);
+    const hasOverlap = appointments.some((appointment) => {
+      const appointmentStart = appointment.appointmentDate;
+      const appointmentEnd = new Date(appointmentStart.getTime() + APPOINTMENT_SLOT_MS);
+
+      return slotStart < appointmentEnd && slotEnd > appointmentStart;
+    });
+
+    if (hasOverlap) {
+      unavailableTimes.add(formatSlotTime(slotStart));
+    }
+  }
+
+  return Array.from(unavailableTimes).map((label) => ({ label }));
 }
 
 async function getAppointmentOptions(req, res) {
@@ -42,6 +97,50 @@ async function getAppointmentOptions(req, res) {
     return res.status(500).json({
       success: false,
       message: 'Could not load patients and doctors.'
+    });
+  }
+}
+
+async function getDoctorAvailability(req, res) {
+  const { doctor, date } = req.query;
+
+  if (!doctor || !mongoose.Types.ObjectId.isValid(doctor)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please select a valid doctor.'
+    });
+  }
+
+  const dayRange = getDayRange(date);
+
+  if (!dayRange) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please select a valid appointment date.'
+    });
+  }
+
+  try {
+    const appointments = await Appointment.find({
+      doctor,
+      appointmentDate: {
+        $gte: dayRange.start,
+        $lt: dayRange.end
+      },
+      status: { $ne: 'Cancelled' }
+    })
+      .sort({ appointmentDate: 1 })
+      .select('appointmentDate');
+
+    return res.status(200).json({
+      success: true,
+      slotMinutes: APPOINTMENT_SLOT_MINUTES,
+      unavailableSlots: getUnavailableSlotsForDay(appointments, dayRange)
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Could not load doctor availability.'
     });
   }
 }
@@ -95,6 +194,8 @@ async function createAppointment(req, res) {
 
   if (!cleanDate) {
     errors.appointmentDate = 'Please select a valid appointment date and time.';
+  } else if (!isValidAppointmentSlot(cleanDate)) {
+    errors.appointmentDate = `Appointments must start on a ${APPOINTMENT_SLOT_MINUTES}-minute slot.`;
   }
 
   if (!reason || !String(reason).trim()) {
@@ -131,16 +232,23 @@ async function createAppointment(req, res) {
       });
     }
 
+    const slotStart = cleanDate;
+    const slotEnd = new Date(slotStart.getTime() + APPOINTMENT_SLOT_MS);
+    const previousSlotStart = new Date(slotStart.getTime() - APPOINTMENT_SLOT_MS);
+
     const existingAppointment = await Appointment.findOne({
       doctor,
-      appointmentDate: cleanDate,
+      appointmentDate: {
+        $gt: previousSlotStart,
+        $lt: slotEnd
+      },
       status: { $ne: 'Cancelled' }
     });
 
     if (existingAppointment) {
       return res.status(409).json({
         success: false,
-        message: 'This doctor is already booked at the selected date and time.'
+        message: `This doctor already has a booking within this ${APPOINTMENT_SLOT_MINUTES}-minute slot.`
       });
     }
 
@@ -161,7 +269,7 @@ async function createAppointment(req, res) {
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: 'Double booking blocked: this doctor already has an appointment at this time.'
+        message: `Double booking blocked: this doctor already has an appointment in this ${APPOINTMENT_SLOT_MINUTES}-minute slot.`
       });
     }
 
@@ -221,6 +329,7 @@ module.exports = {
   getAppointmentsPage,
   getCreateAppointmentPage,
   getAppointmentOptions,
+  getDoctorAvailability,
   listAppointments,
   createAppointment,
   updateAppointmentStatus
