@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Appointment | HMS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
+</head>
+
+<body class="grey lighten-4">
+  <nav class="teal">
+    <div class="nav-wrapper container">
+      <a href="/dashboard" class="brand-logo">HMS</a>
+      <ul class="right">
+        <li><a href="/dashboard">Dashboard</a></li>
+        <li><a href="/appointments">Appointments</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <main class="container" style="margin-top: 35px;">
+    <div class="card">
+      <div class="card-content">
+        <span class="card-title">Create Appointment</span>
+        <p class="grey-text text-darken-1">
+          Schedule a patient with the correct doctor.
+        </p>
+
+        <div id="message" style="margin-top: 20px;"></div>
+
+        <form id="appointmentForm" style="margin-top: 25px;">
+          <div class="input-field">
+            <select id="patient" name="patient" required>
+              <option value="" disabled selected>Select patient</option>
+            </select>
+            <label>Patient</label>
+          </div>
+
+          <div class="input-field">
+            <select id="doctor" name="doctor" required>
+              <option value="" disabled selected>Select doctor</option>
+            </select>
+            <label>Doctor</label>
+          </div>
+
+          <div class="input-field">
+            <input id="appointmentDate" name="appointmentDate" type="datetime-local" required />
+            <label class="active" for="appointmentDate">Appointment Date & Time</label>
+          </div>
+
+          <div class="input-field">
+            <textarea id="reason" name="reason" class="materialize-textarea" required></textarea>
+            <label for="reason">Reason</label>
+          </div>
+
+          <button class="btn teal" type="submit">
+            <i class="material-icons left">event_available</i>
+            Create Appointment
+          </button>
+
+          <a href="/appointments" class="btn-flat">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+
+  <script>
+    const messageBox = document.getElementById('message');
+
+    function showMessage(text, type = 'error') {
+      const colour = type === 'success' ? 'green lighten-4 green-text text-darken-4' : 'red lighten-4 red-text text-darken-4';
+      messageBox.innerHTML = `<div class="card-panel ${colour}">${text}</div>`;
+    }
+
+    async function loadOptions() {
+      const response = await fetch('/appointments/options');
+      const result = await response.json();
+
+      if (!result.success) {
+        showMessage(result.message || 'Could not load form options.');
+        return;
+      }
+
+      const patientSelect = document.getElementById('patient');
+      const doctorSelect = document.getElementById('doctor');
+
+      result.patients.forEach((patient) => {
+        const option = document.createElement('option');
+        option.value = patient._id;
+        option.textContent = `${patient.firstName} ${patient.lastName}${patient.patientId ? ' - ' + patient.patientId : ''}`;
+        patientSelect.appendChild(option);
+      });
+
+      result.doctors.forEach((doctor) => {
+        const option = document.createElement('option');
+        option.value = doctor._id;
+        option.textContent = doctor.email;
+        doctorSelect.appendChild(option);
+      });
+
+      M.FormSelect.init(document.querySelectorAll('select'));
+    }
+
+    document.getElementById('appointmentForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      const payload = {
+        patient: document.getElementById('patient').value,
+        doctor: document.getElementById('doctor').value,
+        appointmentDate: document.getElementById('appointmentDate').value,
+        reason: document.getElementById('reason').value
+      };
+
+      const response = await fetch('/appointments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        showMessage(result.message || 'Could not create appointment.');
+        return;
+      }
+
+      showMessage(result.message, 'success');
+
+      setTimeout(() => {
+        window.location.href = '/appointments';
+      }, 700);
+    });
+
+    loadOptions();
+  </script>
+</body>
+</html>
