@@ -9,6 +9,7 @@ const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboard');
 const patientRoutes = require('./routes/patients');
+const appointmentRoutes = require('./routes/appointments');
 
 const { ensureAuthenticated } = require('./middleware/authMiddleware');
 const allowRoles = require('./middleware/rolesMiddleware');
@@ -20,7 +21,6 @@ connectDB();
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(
@@ -55,6 +55,8 @@ app.get('/', (req, res) => {
 app.use('/', authRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/patients', patientRoutes);
+app.use('/appointments', appointmentRoutes);
+  
 
 app.get(
   '/staff',
