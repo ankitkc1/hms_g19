@@ -16,7 +16,7 @@
 - MVC project structure
 
 ## Architecture Diagram
-<img width="1518" height="703" alt="HMS – Architecture Diagram" src="https://github.com/user-attachments/assets/99739b74-e5da-4ea5-8de6-236d2e2bf935" />
+<img width="1518" height="703" alt="HMS – Architecture Diagram" src="https://github.com/user-attachments/assets/c879a4b6-dfef-409b-843c-aef44639b3cf" />
 
 
 ## Technologies used
