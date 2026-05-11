@@ -24,8 +24,8 @@
 
 - Node.js
 - Express.js
-- EJS
-- Bootstrap 5
+- HTML
+- Materialize CSS
 - MongoDB Atlas
 - Mongoose
 - express-session
