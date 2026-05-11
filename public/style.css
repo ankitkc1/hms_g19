@@ -54,3 +54,27 @@ body {
 nav button {
   margin-top: 14px;
 }
+
+.availability-panel {
+      margin: 8px 0 24px;
+    }
+
+    .availability-title {
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .unavailable-slot {
+      display: inline-block;
+      margin: 0 8px 8px 0;
+      padding: 6px 10px;
+      border-radius: 4px;
+      background: #ffebee;
+      color: #b71c1c;
+      font-weight: 600;
+    }
+
+    .available-note {
+      color: #2e7d32;
+      font-weight: 600;
+    }
