@@ -44,7 +44,7 @@ npm install
 
 All demo users use the same password:
 
-Password123
+password123
 
 | Role | Email |
 |------|-------|
