@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <title>Dashboard | HMS</title>
 
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
@@ -13,29 +12,32 @@
   />
   <link rel="stylesheet" href="/style.css" />
 </head>
+
 <body>
   <nav class="teal darken-2">
     <div class="nav-wrapper container">
       <a href="/dashboard" class="brand-logo">HMS</a>
 
-      <ul class="right">
+      <ul class="right hide-on-med-and-down">
         <li class="role-link" data-roles="admin,reception,doctor,nurse">
-  <a href="/patients">Patients</a>
-  <li><a href="/appointments">Appointments</a></li>
-</li>
+          <a href="/appointments">Appointments</a>
+        </li>
 
-<li class="role-link" data-roles="admin,reception">
-  <a href="/patients/new">Register Patient</a>
-  <li><a href="/appointments/new">Book Appointment</a></li>
-</li>
+        <li class="role-link" data-roles="admin,reception">
+          <a href="/patients/new">Register Patient</a>
+        </li>
 
-<li class="role-link" data-roles="admin">
-  <a href="/staff">Staff</a>
-</li>
+        <li class="role-link" data-roles="admin,reception">
+          <a href="/appointments/new">Book Appointment</a>
+        </li>
 
-<li class="role-link" data-roles="patient">
-  <a href="/profile">My Profile</a>
-</li>
+        <li class="role-link" data-roles="admin">
+          <a href="/staff">Staff</a>
+        </li>
+
+        <li class="role-link" data-roles="patient">
+          <a href="/profile">My Profile</a>
+        </li>
 
         <li>
           <button id="logoutButton" class="btn red darken-1 waves-effect waves-light">
@@ -48,18 +50,172 @@
   </nav>
 
   <main class="container dashboard-container">
-    <div class="card z-depth-2">
-      <div class="card-content">
-        <span class="card-title">Secure Dashboard</span>
-
-        <p id="userInfo">Loading user details...</p>
-
-        <p class="grey-text text-darken-1">
-          You are logged in securely. Your session will automatically expire after
-          30 minutes of inactivity.
-        </p>
+    <section class="dashboard-hero z-depth-1">
+      <div>
+        <p class="dashboard-kicker">Hospital Management System</p>
+        <h4 id="dashboardTitle">Dashboard</h4>
+        <p id="userInfo" class="dashboard-user">Loading user details...</p>
       </div>
-    </div>
+
+      <div class="dashboard-date-card">
+        <i class="material-icons">today</i>
+        <div>
+          <small>Today</small>
+          <strong id="todayDate">-</strong>
+        </div>
+      </div>
+    </section>
+
+    <div id="message" class="message-box" style="display: none;"></div>
+
+    <section id="clinicalDashboard" style="display: none;">
+      <div class="row dashboard-stats">
+        <div class="col s12 m3">
+          <div class="card stat-card">
+            <div class="card-content">
+              <i class="material-icons teal-text">event_available</i>
+              <p>Today</p>
+              <h5 id="todayCount">0</h5>
+            </div>
+          </div>
+        </div>
+
+        <div class="col s12 m3">
+          <div class="card stat-card">
+            <div class="card-content">
+              <i class="material-icons orange-text">schedule</i>
+              <p>Scheduled</p>
+              <h5 id="scheduledCount">0</h5>
+            </div>
+          </div>
+        </div>
+
+        <div class="col s12 m3">
+          <div class="card stat-card">
+            <div class="card-content">
+              <i class="material-icons green-text">check_circle</i>
+              <p>Completed</p>
+              <h5 id="completedCount">0</h5>
+            </div>
+          </div>
+        </div>
+
+        <div class="col s12 m3">
+          <div class="card stat-card">
+            <div class="card-content">
+              <i class="material-icons red-text">cancel</i>
+              <p>Cancelled</p>
+              <h5 id="cancelledCount">0</h5>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row dashboard-main-row">
+        <div class="col s12 l8">
+          <div class="card z-depth-1">
+            <div class="card-content">
+              <div class="section-heading">
+                <div>
+                  <span class="card-title" id="appointmentsTitle">Today’s Appointments</span>
+                  <p id="appointmentsSubtitle" class="grey-text text-darken-1">
+                    Scheduled patient visits for today.
+                  </p>
+                </div>
+
+                <a href="/appointments" class="btn-small teal darken-2 waves-effect waves-light">
+                  View All
+                </a>
+              </div>
+
+              <div class="input-field dashboard-filter">
+                <i class="material-icons prefix">search</i>
+                <input id="appointmentSearch" type="text" />
+                <label for="appointmentSearch">Search patient, doctor, reason or status</label>
+              </div>
+
+              <div class="responsive-table-wrapper">
+                <table class="highlight responsive-table">
+                  <thead>
+                    <tr>
+                      <th>Time</th>
+                      <th>Patient</th>
+                      <th>Doctor</th>
+                      <th>Reason</th>
+                      <th>Status</th>
+                      <th>Action</th>
+                    </tr>
+                  </thead>
+
+                  <tbody id="dashboardAppointmentsTable">
+                    <tr>
+                      <td colspan="6">Loading appointments...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col s12 l4">
+          <div class="card z-depth-1">
+            <div class="card-content">
+              <span class="card-title">Next Patient Visit</span>
+              <div id="nextVisitCard" class="next-visit-card">
+                Loading next visit...
+              </div>
+            </div>
+          </div>
+
+          <div class="card z-depth-1">
+            <div class="card-content">
+              <span class="card-title">Work Focus</span>
+              <ul class="collection focus-list">
+                <li class="collection-item">
+                  <i class="material-icons teal-text">assignment</i>
+                  Check scheduled visits
+                </li>
+                <li class="collection-item">
+                  <i class="material-icons teal-text">person</i>
+                  Review patient details
+                </li>
+                <li class="collection-item doctor-only">
+                  <i class="material-icons teal-text">edit_note</i>
+                  Complete appointment status
+                </li>
+                <li class="collection-item nurse-only">
+                  <i class="material-icons teal-text">monitor_heart</i>
+                  Prepare patient care support
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="generalDashboard" style="display: none;">
+      <div class="card z-depth-2">
+        <div class="card-content">
+          <span class="card-title">Secure Dashboard</span>
+          <p class="grey-text text-darken-1">
+            You are logged in securely. Your session will automatically expire after
+            30 minutes of inactivity.
+          </p>
+
+          <div class="dashboard-actions">
+            <a href="/appointments" class="btn teal darken-2">Appointments</a>
+            <a href="/patients/new" class="btn grey darken-2 role-link" data-roles="admin,reception">
+              Register Patient
+            </a>
+            <a href="/appointments/new" class="btn grey darken-2 role-link" data-roles="admin,reception">
+              Book Appointment
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
   </main>
 
   <script src="/js/dashboard.js"></script>
