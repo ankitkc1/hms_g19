@@ -78,3 +78,181 @@ nav button {
       color: #2e7d32;
       font-weight: 600;
     }
+
+
+/* =========================
+   Doctor and Nurse Dashboard
+   Add this at the bottom of public/style.css
+   ========================= */
+
+.dashboard-container {
+  margin-top: 32px;
+  margin-bottom: 48px;
+}
+
+.dashboard-hero {
+  background: linear-gradient(135deg, #00695c, #00897b);
+  color: white;
+  border-radius: 18px;
+  padding: 28px;
+  margin-bottom: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+}
+
+.dashboard-kicker {
+  margin: 0 0 6px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
+  opacity: 0.9;
+}
+
+.dashboard-hero h4 {
+  margin: 0 0 8px;
+  font-weight: 700;
+}
+
+.dashboard-user {
+  margin: 0;
+  opacity: 0.95;
+}
+
+.dashboard-date-card {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 190px;
+}
+
+.dashboard-date-card i {
+  font-size: 34px;
+}
+
+.dashboard-date-card small,
+.dashboard-date-card strong {
+  display: block;
+}
+
+.dashboard-date-card small {
+  opacity: 0.85;
+}
+
+.dashboard-stats .stat-card {
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.stat-card .card-content {
+  min-height: 132px;
+}
+
+.stat-card i {
+  font-size: 34px;
+}
+
+.stat-card p {
+  margin: 10px 0 4px;
+  color: #607d8b;
+}
+
+.stat-card h5 {
+  margin: 0;
+  font-weight: 700;
+}
+
+.dashboard-main-row .card {
+  border-radius: 16px;
+}
+
+.section-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.dashboard-filter {
+  max-width: 520px;
+}
+
+.responsive-table-wrapper {
+  overflow-x: auto;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.status-select {
+  min-width: 130px;
+  height: 34px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  border-color: #cfd8dc;
+}
+
+.next-visit-card {
+  background: #f5fbfa;
+  border: 1px solid #d8eeee;
+  border-radius: 14px;
+  padding: 16px;
+  min-height: 130px;
+}
+
+.next-visit-card h6 {
+  font-weight: 700;
+  margin-top: 8px;
+}
+
+.next-visit-card p {
+  margin: 6px 0;
+}
+
+.next-visit-time {
+  display: inline-block;
+  background: #00695c;
+  color: white;
+  border-radius: 10px;
+  padding: 6px 10px;
+  font-weight: 700;
+}
+
+.focus-list .collection-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dashboard-actions {
+  margin-top: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+@media only screen and (max-width: 700px) {
+  .dashboard-hero {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .section-heading {
+    flex-direction: column;
+  }
+
+  .dashboard-date-card {
+    min-width: unset;
+  }
+}
