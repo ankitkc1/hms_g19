@@ -78,6 +78,33 @@ function getUnavailableSlotsForDay(appointments, dayRange) {
   return Array.from(unavailableTimes).map((label) => ({ label }));
 }
 
+function getAppointmentStatusSummary(appointments) {
+  const summary = {
+    total: appointments.length,
+    scheduled: 0,
+    completed: 0,
+    cancelled: 0
+  };
+
+  appointments.forEach((appointment) => {
+    const status = String(appointment.status || '').toLowerCase();
+
+    if (status === 'scheduled') {
+      summary.scheduled += 1;
+    }
+
+    if (status === 'completed') {
+      summary.completed += 1;
+    }
+
+    if (status === 'cancelled') {
+      summary.cancelled += 1;
+    }
+  });
+
+  return summary;
+}
+
 async function getAppointmentOptions(req, res) {
   try {
     const patients = await Patient.find()
@@ -150,7 +177,7 @@ async function listAppointments(req, res) {
     const user = req.session.user;
     const query = {};
 
-    // Doctor only sees their own scheduled patient visits
+    // Doctor only sees appointments assigned to their user account.
     if (user.role === 'doctor') {
       query.doctor = user.id;
     }
@@ -168,7 +195,8 @@ async function listAppointments(req, res) {
 
     return res.status(200).json({
       success: true,
-      appointments
+      appointments,
+      summary: getAppointmentStatusSummary(appointments)
     });
   } catch (error) {
     return res.status(500).json({

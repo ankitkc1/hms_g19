@@ -1,5 +1,6 @@
 let currentUser = null;
 let allAppointments = [];
+let appointmentSummary = null;
 
 const userInfo = document.getElementById('userInfo');
 const logoutButton = document.getElementById('logoutButton');
@@ -12,7 +13,7 @@ const generalDashboard = document.getElementById('generalDashboard');
 const dashboardAppointmentsTable = document.getElementById('dashboardAppointmentsTable');
 const appointmentSearch = document.getElementById('appointmentSearch');
 
-const todayCount = document.getElementById('todayCount');
+const allCount = document.getElementById('allCount');
 const scheduledCount = document.getElementById('scheduledCount');
 const completedCount = document.getElementById('completedCount');
 const cancelledCount = document.getElementById('cancelledCount');
@@ -95,6 +96,33 @@ function escapeHtml(value) {
     .replaceAll("'", '&#039;');
 }
 
+function buildAppointmentSummary(appointments) {
+  const summary = {
+    total: appointments.length,
+    scheduled: 0,
+    completed: 0,
+    cancelled: 0
+  };
+
+  appointments.forEach((appointment) => {
+    const status = String(appointment.status || '').toLowerCase();
+
+    if (status === 'scheduled') {
+      summary.scheduled += 1;
+    }
+
+    if (status === 'completed') {
+      summary.completed += 1;
+    }
+
+    if (status === 'cancelled') {
+      summary.cancelled += 1;
+    }
+  });
+
+  return summary;
+}
+
 function canUpdateStatus(appointment) {
   if (!currentUser) return false;
 
@@ -160,20 +188,12 @@ function getFilteredAppointments() {
 }
 
 function renderSummary() {
-  const todayAppointments = allAppointments.filter((appointment) =>
-    isToday(appointment.appointmentDate)
-  );
+  const summary = appointmentSummary || buildAppointmentSummary(allAppointments);
 
-  todayCount.textContent = todayAppointments.length;
-  scheduledCount.textContent = todayAppointments.filter(
-    (appointment) => appointment.status === 'Scheduled'
-  ).length;
-  completedCount.textContent = todayAppointments.filter(
-    (appointment) => appointment.status === 'Completed'
-  ).length;
-  cancelledCount.textContent = todayAppointments.filter(
-    (appointment) => appointment.status === 'Cancelled'
-  ).length;
+  allCount.textContent = summary.total || 0;
+  scheduledCount.textContent = summary.scheduled || 0;
+  completedCount.textContent = summary.completed || 0;
+  cancelledCount.textContent = summary.cancelled || 0;
 }
 
 function renderNextVisit() {
@@ -287,7 +307,7 @@ async function loadCurrentUser() {
     } else if (currentUser.role === 'nurse') {
       dashboardTitle.textContent = 'Nurse Dashboard';
       document.getElementById('appointmentsSubtitle').textContent =
-        'Today’s patient visits that may need nursing support.';
+        "Today's patient visits that may need nursing support.";
       clinicalDashboard.style.display = 'block';
       generalDashboard.style.display = 'none';
     } else {
@@ -320,6 +340,7 @@ async function loadAppointments() {
     }
 
     allAppointments = result.appointments || [];
+    appointmentSummary = result.summary || buildAppointmentSummary(allAppointments);
     renderDashboard();
   } catch (error) {
     showMessage('Something went wrong while loading appointments.');
