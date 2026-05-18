@@ -48,7 +48,6 @@ let currentUser = null;
 
       if (canCreateAppointments()) {
         document.getElementById('bookButtonWrap').style.display = 'block';
-        document.getElementById('bookNavItem').style.display = 'block';
       }
     }
 

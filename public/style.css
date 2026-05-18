@@ -55,6 +55,74 @@ nav button {
   margin-top: 14px;
 }
 
+.hms-navbar {
+  min-height: 64px;
+}
+
+.hms-nav-links {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+}
+
+.hms-nav-links a {
+  white-space: nowrap;
+}
+
+.hms-nav-links button {
+  margin: 0 0 0 8px;
+}
+
+.hms-nav-links li.active a {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+@media only screen and (max-width: 992px) {
+  .hms-navbar {
+    height: auto;
+    line-height: normal;
+  }
+
+  .hms-navbar .nav-wrapper {
+    display: flex;
+    min-height: 64px;
+    height: auto;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    padding: 8px 0;
+  }
+
+  .hms-navbar .brand-logo {
+    position: static;
+    transform: none;
+    left: auto;
+    display: inline-block;
+    line-height: 48px;
+  }
+
+  .hms-nav-links {
+    float: none !important;
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    line-height: 40px;
+  }
+
+  .hms-nav-links a {
+    line-height: 40px;
+    padding: 0 10px;
+  }
+
+  .hms-nav-links button {
+    height: 34px;
+    line-height: 34px;
+    margin: 3px 0 3px 8px;
+    padding: 0 12px;
+  }
+}
+
 .availability-panel {
       margin: 8px 0 24px;
     }

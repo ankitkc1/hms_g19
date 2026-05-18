@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Access Denied | HMS</title>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
   <link
     rel="stylesheet"
     href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
@@ -10,6 +11,14 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
+  <nav class="teal darken-2 hms-navbar">
+    <div class="nav-wrapper container">
+      <a href="/dashboard" class="brand-logo">HMS</a>
+
+      <ul id="mainNavLinks" class="right hms-nav-links"></ul>
+    </div>
+  </nav>
+
   <main class="container dashboard-container">
     <div class="card z-depth-2">
       <div class="card-content">
@@ -19,5 +28,7 @@
       </div>
     </div>
   </main>
+
+  <script src="/js/navbar.js"></script>
 </body>
 </html>

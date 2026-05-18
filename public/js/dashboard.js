@@ -3,7 +3,6 @@ let allAppointments = [];
 let appointmentSummary = null;
 
 const userInfo = document.getElementById('userInfo');
-const logoutButton = document.getElementById('logoutButton');
 const dashboardTitle = document.getElementById('dashboardTitle');
 const todayDate = document.getElementById('todayDate');
 const messageBox = document.getElementById('message');
@@ -347,16 +346,6 @@ async function loadAppointments() {
   }
 }
 
-async function logoutUser() {
-  try {
-    const response = await fetch('/logout', { method: 'POST' });
-    const data = await response.json();
-    window.location.href = data.redirectUrl || '/login';
-  } catch (error) {
-    window.location.href = '/login';
-  }
-}
-
 function initTodayDate() {
   todayDate.textContent = new Date().toLocaleDateString('en-AU', {
     weekday: 'short',
@@ -368,10 +357,6 @@ function initTodayDate() {
 
 async function init() {
   initTodayDate();
-
-  if (logoutButton) {
-    logoutButton.addEventListener('click', logoutUser);
-  }
 
   if (appointmentSearch) {
     appointmentSearch.addEventListener('input', renderAppointmentsTable);

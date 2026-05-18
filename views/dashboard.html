@@ -14,38 +14,11 @@
 </head>
 
 <body>
-  <nav class="teal darken-2">
+  <nav class="teal darken-2 hms-navbar">
     <div class="nav-wrapper container">
       <a href="/dashboard" class="brand-logo">HMS</a>
 
-      <ul class="right hide-on-med-and-down">
-        <li class="role-link" data-roles="admin,reception,doctor,nurse">
-          <a href="/appointments">Appointments</a>
-        </li>
-
-        <li class="role-link" data-roles="admin,reception">
-          <a href="/patients/new">Register Patient</a>
-        </li>
-
-        <li class="role-link" data-roles="admin,reception">
-          <a href="/appointments/new">Book Appointment</a>
-        </li>
-
-        <li class="role-link" data-roles="admin">
-          <a href="/staff">Staff</a>
-        </li>
-
-        <li class="role-link" data-roles="patient">
-          <a href="/profile">My Profile</a>
-        </li>
-
-        <li>
-          <button id="logoutButton" class="btn red darken-1 waves-effect waves-light">
-            Logout
-            <i class="material-icons right">logout</i>
-          </button>
-        </li>
-      </ul>
+      <ul id="mainNavLinks" class="right hms-nav-links"></ul>
     </div>
   </nav>
 
@@ -218,6 +191,7 @@
     </section>
   </main>
 
+  <script src="/js/navbar.js"></script>
   <script src="/js/dashboard.js"></script>
   <script src="/js/session-timeout.js"></script>
 </body>

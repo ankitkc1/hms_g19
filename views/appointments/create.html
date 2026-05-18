@@ -12,13 +12,11 @@
 </head>
 
 <body class="grey lighten-4">
-  <nav class="teal">
+  <nav class="teal darken-2 hms-navbar">
     <div class="nav-wrapper container">
       <a href="/dashboard" class="brand-logo">HMS</a>
-      <ul class="right">
-        <li><a href="/dashboard">Dashboard</a></li>
-        <li><a href="/appointments">Appointments</a></li>
-      </ul>
+
+      <ul id="mainNavLinks" class="right hms-nav-links"></ul>
     </div>
   </nav>
 
@@ -73,6 +71,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
 
+  <script src="/js/navbar.js"></script>
   <script src="/js/appointment_create.js"></script>
 
 </body>

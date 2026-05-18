@@ -14,20 +14,11 @@
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body>
-  <nav class="teal darken-2">
+  <nav class="teal darken-2 hms-navbar">
     <div class="nav-wrapper container">
       <a href="/dashboard" class="brand-logo">HMS</a>
 
-      <ul class="right">
-        <li><a href="/dashboard">Dashboard</a></li>
-        <li><a href="/patients/new">Register Patient</a></li>
-        <li>
-          <button id="logoutButton" class="btn red darken-1 waves-effect waves-light">
-            Logout
-            <i class="material-icons right">logout</i>
-          </button>
-        </li>
-      </ul>
+      <ul id="mainNavLinks" class="right hms-nav-links"></ul>
     </div>
   </nav>
 
@@ -118,6 +109,7 @@
   </main>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script src="/js/navbar.js"></script>
   <script src="/js/patient-create.js"></script>
 </body>
 </html>

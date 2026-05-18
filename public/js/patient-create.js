@@ -1,7 +1,6 @@
 const patientForm = document.getElementById('patientForm');
 const resultMessage = document.getElementById('resultMessage');
 const submitButton = document.getElementById('submitButton');
-const logoutButton = document.getElementById('logoutButton');
 
 document.addEventListener('DOMContentLoaded', () => {
   M.FormSelect.init(document.querySelectorAll('select'));
@@ -24,23 +23,6 @@ function showErrors(errors) {
       errorElement.textContent = errors[field];
     }
   });
-}
-
-async function logoutUser() {
-  try {
-    const response = await fetch('/logout', {
-      method: 'POST'
-    });
-
-    const data = await response.json();
-    window.location.href = data.redirectUrl || '/login';
-  } catch (error) {
-    window.location.href = '/login';
-  }
-}
-
-if (logoutButton) {
-  logoutButton.addEventListener('click', logoutUser);
 }
 
 patientForm.addEventListener('submit', async (event) => {
