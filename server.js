@@ -10,6 +10,7 @@ const authRoutes = require('./routes/authRoutes');
 const dashboardRoutes = require('./routes/dashboard');
 const patientRoutes = require('./routes/patients');
 const appointmentRoutes = require('./routes/appointments');
+const staffRoutes = require('./routes/staff');
 
 const { ensureAuthenticated } = require('./middleware/authMiddleware');
 const allowRoles = require('./middleware/rolesMiddleware');
@@ -56,16 +57,8 @@ app.use('/', authRoutes);
 app.use('/dashboard', dashboardRoutes);
 app.use('/patients', patientRoutes);
 app.use('/appointments', appointmentRoutes);
+app.use('/staff', staffRoutes);
   
-
-app.get(
-  '/staff',
-  ensureAuthenticated,
-  allowRoles('admin'),
-  (req, res) => {
-    res.send('Staff management page');
-  }
-);
 
 app.get(
   '/profile',
@@ -82,4 +75,5 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
+  console.log(process.env.MONGO_URI);
 });

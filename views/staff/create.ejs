@@ -1,0 +1,126 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">Add Staff Member</h1>
+    <p class="text-muted mb-0">
+      Create new staff accounts for the hospital management system.
+    </p>
+  </div>
+
+  <a href="/staff" class="btn btn-outline-secondary">
+    Back
+  </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-4">
+
+    <form id="staffForm" class="row g-3">
+
+      <div class="col-md-6">
+        <label class="form-label">Full Name</label>
+        <input
+          type="text"
+          class="form-control"
+          name="fullName"
+          required
+        />
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Email</label>
+        <input
+          type="email"
+          class="form-control"
+          name="email"
+          required
+        />
+      </div>
+
+      <div class="col-md-6">
+        <label class="form-label">Password</label>
+        <input
+          type="password"
+          class="form-control"
+          name="password"
+          required
+        />
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Role</label>
+
+        <select class="form-select" name="role" required>
+          <option value="">Select Role</option>
+          <option value="admin">Admin</option>
+          <option value="doctor">Doctor</option>
+          <option value="nurse">Nurse</option>
+          <option value="reception">Reception</option>
+        </select>
+      </div>
+
+      <div class="col-md-3">
+        <label class="form-label">Department</label>
+
+        <input
+          type="text"
+          class="form-control"
+          name="department"
+        />
+      </div>
+
+      <div class="col-12">
+        <button class="btn btn-primary">
+          Create Staff Account
+        </button>
+      </div>
+
+    </form>
+
+  </div>
+</div>
+
+<script>
+  const staffForm = document.getElementById('staffForm');
+
+  staffForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const formData = new FormData(staffForm);
+
+    const payload = {
+      fullName: formData.get('fullName'),
+      email: formData.get('email'),
+      password: formData.get('password'),
+      role: formData.get('role'),
+      department: formData.get('department')
+    };
+
+    try {
+      const response = await fetch('/staff', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const result = await response.json();
+
+      if (!result.success) {
+        alert(result.message);
+        return;
+      }
+
+      alert(result.message);
+
+      window.location.href = '/staff';
+
+    } catch (error) {
+      alert('Could not create staff account.');
+    }
+  });
+</script>
+
+<%- include('../partials/footer') %>
