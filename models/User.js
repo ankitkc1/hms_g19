@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema(
       enum: ['admin', 'doctor', 'nurse', 'reception', 'patient']
     },
 
+    fullName: {
+      type: String,
+      trim: true
+    },
+
     email: {
       type: String,
       required: true,

@@ -22,7 +22,9 @@ exports.getAllStaff = async (req, res) => {
   try {
     const staff = await User.find({
       role: { $ne: 'patient' }
-    }).select('-password');
+    })
+      .sort({ fullName: 1, email: 1 })
+      .select('-password');
 
     res.json(staff);
   } catch (error) {
@@ -38,9 +40,11 @@ Create Staff
 */
 exports.createStaff = async (req, res) => {
   try {
-    const { email, password, role } = req.body;
+    const fullName = String(req.body.fullName || '').trim();
+    const email = String(req.body.email || '').trim().toLowerCase();
+    const { password, role } = req.body;
 
-    if (!email || !password || !role) {
+    if (!fullName || !email || !password || !role) {
       return res.status(400).json({ message: 'All fields required' });
     }
 
@@ -51,6 +55,7 @@ exports.createStaff = async (req, res) => {
     }
 
     const newUser = await User.create({
+      fullName,
       email,
       password,
       role
