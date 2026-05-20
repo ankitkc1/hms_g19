@@ -11,6 +11,7 @@ const dashboardRoutes = require('./routes/dashboard');
 const patientRoutes = require('./routes/patients');
 const appointmentRoutes = require('./routes/appointments');
 const staffRoutes = require('./routes/staff');
+const searchRoutes = require('./routes/search');
 
 const { ensureAuthenticated } = require('./middleware/authMiddleware');
 const allowRoles = require('./middleware/rolesMiddleware');
@@ -58,6 +59,7 @@ app.use('/dashboard', dashboardRoutes);
 app.use('/patients', patientRoutes);
 app.use('/appointments', appointmentRoutes);
 app.use('/staff', staffRoutes);
+app.use('/search', searchRoutes);
   
 
 app.get(

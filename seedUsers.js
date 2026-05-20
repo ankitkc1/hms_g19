@@ -5,21 +5,25 @@ const User = require('./models/User');
 
 const users = [
   {
+    fullName: 'System Admin',
     email: 'admin@hms.com',
     password: 'password123',
     role: 'admin'
   },
   {
+    fullName: 'Reception Staff',
     email: 'reception@hms.com',
     password: 'password123',
     role: 'reception'
   },
   {
+    fullName: 'Doctor User',
     email: 'doctor@hms.com',
     password: 'password123',
     role: 'doctor'
   },
   {
+    fullName: 'Nurse User',
     email: 'nurse@hms.com',
     password: 'password123',
     role: 'nurse'

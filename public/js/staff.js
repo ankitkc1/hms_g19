@@ -11,6 +11,15 @@ document.addEventListener('DOMContentLoaded', () => {
     .addEventListener('submit', createStaff);
 });
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
 async function loadStaff() {
 
   const response = await fetch('/staff/data');
@@ -22,7 +31,7 @@ async function loadStaff() {
   if (!staff.length) {
     table.innerHTML = `
       <tr>
-        <td colspan="3">No staff found</td>
+        <td colspan="4">No staff found</td>
       </tr>
     `;
 
@@ -35,8 +44,9 @@ async function loadStaff() {
 
     table.innerHTML += `
       <tr>
-        <td>${user.email}</td>
-        <td>${user.role}</td>
+        <td>${escapeHtml(user.fullName || '-')}</td>
+        <td>${escapeHtml(user.email)}</td>
+        <td>${escapeHtml(user.role)}</td>
 
         <td>
           <button
@@ -55,6 +65,8 @@ async function createStaff(event) {
 
   event.preventDefault();
 
+  const fullName = document.getElementById('fullName').value;
+
   const email = document.getElementById('email').value;
 
   const password = document.getElementById('password').value;
@@ -69,6 +81,7 @@ async function createStaff(event) {
     },
 
     body: JSON.stringify({
+      fullName,
       email,
       password,
       role

@@ -21,9 +21,11 @@
 
 <body class="grey lighten-4">
 
-  <nav class="teal darken-2">
+  <nav class="teal darken-2 hms-navbar">
     <div class="nav-wrapper container">
       <a href="/dashboard" class="brand-logo">HMS</a>
+
+      <ul id="mainNavLinks" class="right hms-nav-links"></ul>
     </div>
   </nav>
 
@@ -41,6 +43,11 @@
         <span class="card-title">Create Staff</span>
 
         <form id="staffForm">
+
+          <div class="input-field">
+            <input id="fullName" type="text" required />
+            <label for="fullName">Full Name</label>
+          </div>
 
           <div class="input-field">
             <input id="email" type="email" required />
@@ -83,6 +90,7 @@
         <table class="striped">
           <thead>
             <tr>
+              <th>Name</th>
               <th>Email</th>
               <th>Role</th>
               <th>Action</th>
@@ -91,7 +99,7 @@
 
           <tbody id="staffTable">
             <tr>
-              <td colspan="3">Loading...</td>
+              <td colspan="4">Loading...</td>
             </tr>
           </tbody>
         </table>
@@ -105,6 +113,7 @@
     src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js">
   </script>
 
+  <script src="/js/navbar.js"></script>
   <script src="/js/staff.js"></script>
 
 </body>
