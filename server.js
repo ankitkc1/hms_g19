@@ -1,9 +1,11 @@
 require('dotenv').config();
 
 const express = require('express');
+const http = require('http');
 const path = require('path');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
+const { Server } = require('socket.io');
 
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
@@ -12,39 +14,67 @@ const patientRoutes = require('./routes/patients');
 const appointmentRoutes = require('./routes/appointments');
 const staffRoutes = require('./routes/staff');
 const searchRoutes = require('./routes/search');
+const notificationRoutes = require('./routes/notifications');
 
 const { ensureAuthenticated } = require('./middleware/authMiddleware');
 const allowRoles = require('./middleware/rolesMiddleware');
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server);
 const PORT = process.env.PORT || 3000;
 
 connectDB();
+app.set('io', io);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.use(
-  session({
-    name: 'hms.sid',
-    secret: process.env.SESSION_SECRET || 'dev_secret_change_me',
-    resave: false,
-    saveUninitialized: false,
-    rolling: true,
-    store: MongoStore.create({
-      mongoUrl: process.env.MONGO_URI,
-      collectionName: 'sessions',
-      ttl: 30 * 60
-    }),
-    cookie: {
-      httpOnly: true,
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 1000 * 60 * 30
-    }
-  })
-);
+const sessionMiddleware = session({
+  name: 'hms.sid',
+  secret: process.env.SESSION_SECRET || 'dev_secret_change_me',
+  resave: false,
+  saveUninitialized: false,
+  rolling: true,
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGO_URI,
+    collectionName: 'sessions',
+    ttl: 30 * 60
+  }),
+  cookie: {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 1000 * 60 * 30
+  }
+});
+
+app.use(sessionMiddleware);
+
+io.engine.use(sessionMiddleware);
+
+io.use((socket, next) => {
+  const user = socket.request.session && socket.request.session.user;
+
+  if (!user) {
+    return next(new Error('Unauthorized'));
+  }
+
+  socket.user = user;
+  return next();
+});
+
+io.on('connection', (socket) => {
+  const user = socket.user;
+
+  socket.join(`user:${user.id}`);
+  socket.join(`role:${user.role}`);
+
+  if (user.role !== 'patient') {
+    socket.join('staff');
+  }
+});
 
 app.get('/', (req, res) => {
   if (req.session.user) {
@@ -60,6 +90,7 @@ app.use('/patients', patientRoutes);
 app.use('/appointments', appointmentRoutes);
 app.use('/staff', staffRoutes);
 app.use('/search', searchRoutes);
+app.use('/notifications', notificationRoutes);
   
 
 app.get(
@@ -75,7 +106,7 @@ app.use((req, res) => {
   res.status(404).send('Page not found');
 });
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(process.env.MONGO_URI);
 });
