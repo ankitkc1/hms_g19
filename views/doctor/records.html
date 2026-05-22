@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Patient Record Details | HMS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body class="grey lighten-4">
+  <nav class="teal darken-2 hms-navbar">
+    <div class="nav-wrapper container">
+      <a href="/dashboard" class="brand-logo">HMS</a>
+      <ul id="mainNavLinks" class="right hms-nav-links"></ul>
+    </div>
+  </nav>
+
+  <main class="container dashboard-container">
+    <a href="/doctor/patients" class="btn-flat">
+      <i class="material-icons left">arrow_back</i>
+      Back to Assigned Patients
+    </a>
+
+    <div id="message" class="message-box" style="display:none;"></div>
+
+    <div class="card z-depth-1">
+      <div class="card-content">
+        <span id="patientTitle" class="card-title">Patient Record Details</span>
+
+        <div id="patientDetails">
+          Loading patient details...
+        </div>
+      </div>
+    </div>
+
+    <div class="card z-depth-1">
+      <div class="card-content">
+        <span class="card-title">Appointment History With Me</span>
+
+        <table class="striped responsive-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Reason</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody id="appointmentsTable">
+            <tr>
+              <td colspan="3">Loading appointment history...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/navbar.js"></script>
+  <script src="/js/doctor-records-view.js"></script>
+</body>
+</html>

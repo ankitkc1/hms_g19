@@ -17,6 +17,11 @@
       roles: ['admin', 'reception', 'doctor', 'nurse', 'patient']
     },
     {
+      label: 'Assigned Patients',
+      href: '/doctor/patients',
+      roles: ['doctor']
+    },
+    {
       label: 'Register Patient',
       href: '/patients/new',
       roles: ['admin', 'reception']
