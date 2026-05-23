@@ -57,8 +57,52 @@
         </table>
       </div>
     </div>
+
+    <div class="card z-depth-1">
+      <div class="card-content">
+        <span class="card-title">Add Clinical Note</span>
+        <p class="grey-text text-darken-1">
+          Add diagnosis details, treatment notes, and care instructions for this assigned patient.
+        </p>
+
+        <form id="clinicalNoteForm" novalidate>
+          <div class="input-field">
+            <input id="diagnosis" name="diagnosis" type="text" maxlength="500" />
+            <label for="diagnosis">Diagnosis Details *</label>
+            <span id="diagnosisError" class="helper-text red-text"></span>
+          </div>
+
+          <div class="input-field">
+            <textarea id="treatmentNotes" name="treatmentNotes" class="materialize-textarea" maxlength="1500"></textarea>
+            <label for="treatmentNotes">Treatment Notes *</label>
+            <span id="treatmentNotesError" class="helper-text red-text"></span>
+          </div>
+
+          <div class="input-field">
+            <textarea id="careInstructions" name="careInstructions" class="materialize-textarea" maxlength="1500"></textarea>
+            <label for="careInstructions">Care Instructions *</label>
+            <span id="careInstructionsError" class="helper-text red-text"></span>
+          </div>
+
+          <button id="saveClinicalNoteButton" class="btn teal" type="submit">
+            Save Clinical Note
+            <i class="material-icons right">save</i>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card z-depth-1">
+      <div class="card-content">
+        <span class="card-title">Previous Clinical Notes</span>
+        <div id="clinicalRecordsList">
+          Loading clinical notes...
+        </div>
+      </div>
+    </div>
   </main>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
   <script src="/js/navbar.js"></script>
   <script src="/js/doctor-records-view.js"></script>
 </body>

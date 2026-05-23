@@ -6,6 +6,10 @@ const patientDetails = document.getElementById('patientDetails');
 const appointmentsTable = document.getElementById('appointmentsTable');
 const messageBox = document.getElementById('message');
 
+const clinicalNoteForm = document.getElementById('clinicalNoteForm');
+const saveClinicalNoteButton = document.getElementById('saveClinicalNoteButton');
+const clinicalRecordsList = document.getElementById('clinicalRecordsList');
+
 function escapeHtml(value) {
   return String(value || '')
     .replaceAll('&', '&amp;')
@@ -30,8 +34,33 @@ function showMessage(text, type = 'error') {
   messageBox.className = `message-box ${type}`;
 }
 
+function hideMessage() {
+  messageBox.style.display = 'none';
+  messageBox.textContent = '';
+}
+
 function getPatientName(patient) {
   return `${patient.firstName || ''} ${patient.lastName || ''}`.trim();
+}
+
+function clearClinicalNoteErrors() {
+  ['diagnosis', 'treatmentNotes', 'careInstructions'].forEach((field) => {
+    const errorElement = document.getElementById(`${field}Error`);
+
+    if (errorElement) {
+      errorElement.textContent = '';
+    }
+  });
+}
+
+function showClinicalNoteErrors(errors) {
+  Object.entries(errors || {}).forEach(([field, message]) => {
+    const errorElement = document.getElementById(`${field}Error`);
+
+    if (errorElement) {
+      errorElement.textContent = message;
+    }
+  });
 }
 
 function renderPatient(patient) {
@@ -75,6 +104,26 @@ function renderAppointments(appointments) {
   `).join('');
 }
 
+function renderClinicalRecords(records) {
+  if (!records || records.length === 0) {
+    clinicalRecordsList.innerHTML = `
+      <p class="grey-text text-darken-1">No clinical notes have been added yet.</p>
+    `;
+    return;
+  }
+
+  clinicalRecordsList.innerHTML = records.map((record) => `
+    <div class="card-panel">
+      <p><strong>Diagnosis:</strong> ${escapeHtml(record.diagnosis)}</p>
+      <p><strong>Treatment Notes:</strong> ${escapeHtml(record.treatmentNotes)}</p>
+      <p><strong>Care Instructions:</strong> ${escapeHtml(record.careInstructions)}</p>
+      <p class="grey-text text-darken-1">
+        <small>Added on ${escapeHtml(formatDate(record.createdAt))}</small>
+      </p>
+    </div>
+  `).join('');
+}
+
 async function loadPatientDetails() {
   try {
     const response = await fetch(`/doctor/patients/${patientId}/data`);
@@ -88,14 +137,67 @@ async function loadPatientDetails() {
           <td colspan="3">No records available.</td>
         </tr>
       `;
+      renderClinicalRecords([]);
       return;
     }
 
     renderPatient(result.patient);
     renderAppointments(result.appointments || []);
+    renderClinicalRecords(result.clinicalRecords || []);
   } catch (error) {
     showMessage('Could not connect to the server.');
   }
 }
+
+async function saveClinicalNote(event) {
+  event.preventDefault();
+
+  hideMessage();
+  clearClinicalNoteErrors();
+
+  const payload = {
+    diagnosis: document.getElementById('diagnosis').value.trim(),
+    treatmentNotes: document.getElementById('treatmentNotes').value.trim(),
+    careInstructions: document.getElementById('careInstructions').value.trim()
+  };
+
+  saveClinicalNoteButton.disabled = true;
+  saveClinicalNoteButton.textContent = 'Saving...';
+
+  try {
+    const response = await fetch(`/doctor/patients/${patientId}/clinical-records`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    const result = await response.json();
+
+    if (!result.success) {
+      showMessage(result.message || 'Could not save clinical note.');
+      showClinicalNoteErrors(result.errors);
+      return;
+    }
+
+    showMessage(result.message || 'Clinical note added successfully.', 'success');
+
+    clinicalNoteForm.reset();
+
+    if (window.M) {
+      M.updateTextFields();
+    }
+
+    await loadPatientDetails();
+  } catch (error) {
+    showMessage('Could not connect to the server.');
+  } finally {
+    saveClinicalNoteButton.disabled = false;
+    saveClinicalNoteButton.innerHTML = 'Save Clinical Note <i class="material-icons right">save</i>';
+  }
+}
+
+clinicalNoteForm.addEventListener('submit', saveClinicalNote);
 
 loadPatientDetails();

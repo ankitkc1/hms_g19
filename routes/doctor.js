@@ -32,4 +32,11 @@ router.get(
   doctorController.getAssignedPatientDetails
 );
 
+router.post(
+  '/patients/:patientId/clinical-records',
+  ensureAuthenticated,
+  allowRoles('doctor'),
+  doctorController.addClinicalRecord
+);
+
 module.exports = router;
