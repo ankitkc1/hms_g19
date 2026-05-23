@@ -23,9 +23,9 @@ function formatDate(value) {
 }
 
 function showMessage(text, type = 'error') {
-  messageBox.style.display = 'block';
   messageBox.textContent = text;
   messageBox.className = `message-box ${type}`;
+  messageBox.classList.remove('hide');
 }
 
 function getPatientName(patient) {

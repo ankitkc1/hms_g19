@@ -29,13 +29,12 @@ function formatDate(value) {
 }
 
 function showMessage(text, type = 'error') {
-  messageBox.style.display = 'block';
-  messageBox.textContent = text;
   messageBox.className = `message-box ${type}`;
+  messageBox.textContent = text;
 }
 
 function hideMessage() {
-  messageBox.style.display = 'none';
+  messageBox.className = 'message-box hide';
   messageBox.textContent = '';
 }
 
