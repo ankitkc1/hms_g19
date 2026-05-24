@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Assigned Patients | HMS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body class="grey lighten-4">
+  <nav class="teal darken-2 hms-navbar">
+    <div class="nav-wrapper container">
+      <a href="/dashboard" class="brand-logo">HMS</a>
+      <ul id="mainNavLinks" class="right hms-nav-links"></ul>
+    </div>
+  </nav>
+
+  <main class="container dashboard-container">
+    <div class="dashboard-hero z-depth-1">
+      <div>
+        <p class="dashboard-kicker">Doctor Records</p>
+        <h4>Assigned Patients</h4>
+        <p class="dashboard-user">Patients linked to your appointments.</p>
+      </div>
+      <div class="dashboard-date-card">
+        <i class="material-icons">local_hospital</i>
+        <div>
+          <small>Access</small>
+          <strong>Doctor Only</strong>
+        </div>
+      </div>
+    </div>
+
+    <div id="message" class="message-box hide"></div>
+
+    <div class="card z-depth-1">
+      <div class="card-content">
+        <span class="card-title">My Assigned Patients</span>
+
+        <div class="input-field">
+          <i class="material-icons prefix">search</i>
+          <input id="patientSearch" type="text" />
+          <label for="patientSearch">Search assigned patient</label>
+        </div>
+
+        <table class="striped responsive-table">
+          <thead>
+            <tr>
+              <th>Patient ID</th>
+              <th>Name</th>
+              <th>Phone</th>
+              <th>Email</th>
+              <th>Last Appointment</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="patientsTable">
+            <tr>
+              <td colspan="6">Loading assigned patients...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/navbar.js"></script>
+  <script src="/js/doctor-patients.js"></script>
+</body>
+</html>

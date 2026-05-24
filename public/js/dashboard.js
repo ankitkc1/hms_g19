@@ -11,7 +11,8 @@ const clinicalDashboard = document.getElementById('clinicalDashboard');
 const generalDashboard = document.getElementById('generalDashboard');
 const dashboardAppointmentsTable = document.getElementById('dashboardAppointmentsTable');
 const appointmentSearch = document.getElementById('appointmentSearch');
-
+const statusFilter = document.getElementById('statusFilter');
+const dateFilter = document.getElementById('dateFilter');
 const allCount = document.getElementById('allCount');
 const scheduledCount = document.getElementById('scheduledCount');
 const completedCount = document.getElementById('completedCount');
@@ -160,10 +161,30 @@ async function updateStatus(appointmentId, status) {
 
 function getFilteredAppointments() {
   const searchValue = appointmentSearch.value.trim().toLowerCase();
+  const selectedStatus = statusFilter ? statusFilter.value : '';
+  const selectedDate = dateFilter ? dateFilter.value : '';
 
-  let appointments = allAppointments.filter((appointment) =>
-    isToday(appointment.appointmentDate)
-  );
+  let appointments = allAppointments;
+
+  if (selectedDate) {
+    appointments = appointments.filter((appointment) => {
+      const appointmentDate = new Date(appointment.appointmentDate)
+        .toISOString()
+        .split('T')[0];
+
+      return appointmentDate === selectedDate;
+    });
+  } else {
+    appointments = appointments.filter((appointment) =>
+      isToday(appointment.appointmentDate)
+    );
+  }
+
+  if (selectedStatus) {
+    appointments = appointments.filter((appointment) =>
+      appointment.status === selectedStatus
+    );
+  }
 
   if (searchValue) {
     appointments = appointments.filter((appointment) => {
@@ -359,8 +380,16 @@ async function init() {
   initTodayDate();
 
   if (appointmentSearch) {
-    appointmentSearch.addEventListener('input', renderAppointmentsTable);
-  }
+  appointmentSearch.addEventListener('input', renderAppointmentsTable);
+}
+
+if (statusFilter) {
+  statusFilter.addEventListener('change', renderAppointmentsTable);
+}
+
+if (dateFilter) {
+  dateFilter.addEventListener('change', renderAppointmentsTable);
+}
 
   await loadCurrentUser();
   await loadAppointments();

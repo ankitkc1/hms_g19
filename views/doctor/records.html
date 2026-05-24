@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Patient Record Details | HMS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body class="grey lighten-4">
+  <nav class="teal darken-2 hms-navbar">
+    <div class="nav-wrapper container">
+      <a href="/dashboard" class="brand-logo">HMS</a>
+      <ul id="mainNavLinks" class="right hms-nav-links"></ul>
+    </div>
+  </nav>
+
+  <main class="container dashboard-container">
+    <a href="/doctor/patients" class="btn-flat">
+      <i class="material-icons left">arrow_back</i>
+      Back to Assigned Patients
+    </a>
+
+    <div id="message" class="message-box hide"></div>
+    <div class="card z-depth-1">
+      <div class="card-content">
+        <span id="patientTitle" class="card-title">Patient Record Details</span>
+
+        <div id="patientDetails">
+          Loading patient details...
+        </div>
+      </div>
+    </div>
+
+    <div class="card z-depth-1">
+      <div class="card-content">
+        <span class="card-title">Appointment History With Me</span>
+
+        <table class="striped responsive-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Reason</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+
+          <tbody id="appointmentsTable">
+            <tr>
+              <td colspan="3">Loading appointment history...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card z-depth-1">
+      <div class="card-content">
+        <span class="card-title">Add Clinical Note</span>
+        <p class="grey-text text-darken-1">
+          Add diagnosis details, treatment notes, and care instructions for this assigned patient.
+        </p>
+
+        <form id="clinicalNoteForm" novalidate>
+          <div class="input-field">
+            <input id="diagnosis" name="diagnosis" type="text" maxlength="500" />
+            <label for="diagnosis">Diagnosis Details *</label>
+            <span id="diagnosisError" class="helper-text red-text"></span>
+          </div>
+
+          <div class="input-field">
+            <textarea id="treatmentNotes" name="treatmentNotes" class="materialize-textarea" maxlength="1500"></textarea>
+            <label for="treatmentNotes">Treatment Notes *</label>
+            <span id="treatmentNotesError" class="helper-text red-text"></span>
+          </div>
+
+          <div class="input-field">
+            <textarea id="careInstructions" name="careInstructions" class="materialize-textarea" maxlength="1500"></textarea>
+            <label for="careInstructions">Care Instructions *</label>
+            <span id="careInstructionsError" class="helper-text red-text"></span>
+          </div>
+
+          <button id="saveClinicalNoteButton" class="btn teal" type="submit">
+            Save Clinical Note
+            <i class="material-icons right">save</i>
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card z-depth-1">
+      <div class="card-content">
+        <span class="card-title">Previous Clinical Notes</span>
+        <div id="clinicalRecordsList">
+          Loading clinical notes...
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script src="/js/navbar.js"></script>
+  <script src="/js/doctor-records-view.js"></script>
+</body>
+</html>

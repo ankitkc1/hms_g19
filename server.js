@@ -15,6 +15,7 @@ const appointmentRoutes = require('./routes/appointments');
 const staffRoutes = require('./routes/staff');
 const searchRoutes = require('./routes/search');
 const notificationRoutes = require('./routes/notifications');
+const doctorRoutes = require('./routes/doctor');
 
 const { ensureAuthenticated } = require('./middleware/authMiddleware');
 const allowRoles = require('./middleware/rolesMiddleware');
@@ -39,6 +40,9 @@ const sessionMiddleware = session({
   rolling: true,
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
+     mongoOptions: {
+      family: 4
+    },
     collectionName: 'sessions',
     ttl: 30 * 60
   }),
@@ -91,7 +95,7 @@ app.use('/appointments', appointmentRoutes);
 app.use('/staff', staffRoutes);
 app.use('/search', searchRoutes);
 app.use('/notifications', notificationRoutes);
-  
+app.use('/doctor', doctorRoutes);
 
 app.get(
   '/profile',
