@@ -17,4 +17,11 @@ router.post(
   patientController.createPatient
 );
 
+router.patch(
+  '/:id/non-clinical',
+  ensureAuthenticated,
+  allowRoles('admin', 'reception', 'doctor', 'nurse'),
+  patientController.updatePatientNonClinical
+);
+
 module.exports = router;

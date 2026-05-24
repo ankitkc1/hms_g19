@@ -45,7 +45,7 @@
       label: 'My Profile',
       href: '/profile',
       roles: ['patient']
-    },
+    },  
     {
   label: 'Departments',
   href: '/departments',

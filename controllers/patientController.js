@@ -99,8 +99,73 @@ async function createPatient(req, res) {
     });
   }
 }
+async function updatePatientNonClinical(req, res) {
+  const allowedUpdates = {
+    phone: String(req.body.phone || '').trim(),
+    email: String(req.body.email || '').trim().toLowerCase(),
+    address: String(req.body.address || '').trim(),
+    emergencyContactName: String(req.body.emergencyContactName || '').trim(),
+    emergencyContactPhone: String(req.body.emergencyContactPhone || '').trim()
+  };
+
+  const errors = {};
+
+  if (!allowedUpdates.phone) {
+    errors.phone = 'Phone number is required.';
+  }
+
+  if (!allowedUpdates.address) {
+    errors.address = 'Address is required.';
+  }
+
+  if (!allowedUpdates.emergencyContactName) {
+    errors.emergencyContactName = 'Emergency contact name is required.';
+  }
+
+  if (!allowedUpdates.emergencyContactPhone) {
+    errors.emergencyContactPhone = 'Emergency contact phone is required.';
+  }
+
+  if (Object.keys(errors).length > 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please fix the highlighted fields.',
+      errors
+    });
+  }
+
+  try {
+    const patient = await Patient.findByIdAndUpdate(
+      req.params.id,
+      allowedUpdates,
+      {
+        new: true,
+        runValidators: true
+      }
+    );
+
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: 'Patient not found.'
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: 'Patient information updated successfully.',
+      patient
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Could not update patient information.'
+    });
+  }
+}
 
 module.exports = {
   getCreatePatient,
-  createPatient
+  createPatient,
+  updatePatientNonClinical
 };
