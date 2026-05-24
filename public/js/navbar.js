@@ -47,10 +47,25 @@
       roles: ['patient']
     },  
     {
-  label: 'Departments',
-  href: '/departments',
-  roles: ['admin']
-}
+      label: 'Departments',
+      href: '/departments',
+      roles: ['admin']
+    },
+    {
+      label: 'Audit Logs',
+      href: '/audit',
+      roles: ['admin']
+    },
+   {
+      label: 'Reports',
+      href: '/reports',
+      roles: ['admin']
+    },
+    {
+      label: 'Observations',
+      href: '/nurse/observations',
+      roles: ['nurse']
+   }
   ];
   const searchRoles = ['admin', 'reception', 'doctor', 'nurse'];
   const notificationRoles = ['admin', 'reception', 'doctor', 'nurse'];
