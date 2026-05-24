@@ -4,11 +4,7 @@ const staffController = require('../controllers/staffController');
 const { ensureAuthenticated } = require('../middleware/authMiddleware');
 const allowRoles = require('../middleware/rolesMiddleware');
 
-/*
-=========================================
-Staff Page
-=========================================
-*/
+
 router.get(
   '/',
   ensureAuthenticated,
@@ -16,11 +12,7 @@ router.get(
   staffController.getStaffPage
 );
 
-/*
-=========================================
-Get Staff Data
-=========================================
-*/
+
 router.get(
   '/data',
   ensureAuthenticated,
@@ -28,11 +20,7 @@ router.get(
   staffController.getAllStaff
 );
 
-/*
-=========================================
-Create Staff
-=========================================
-*/
+
 router.post(
   '/',
   ensureAuthenticated,
@@ -40,16 +28,18 @@ router.post(
   staffController.createStaff
 );
 
-/*
-=========================================
-Delete Staff
-=========================================
-*/
-router.delete(
-  '/:id',
+router.patch(
+  '/:id/deactivate',
   ensureAuthenticated,
   allowRoles('admin'),
-  staffController.deleteStaff
+  staffController.deactivateStaff
+);
+
+router.patch(
+  '/:id/activate',
+  ensureAuthenticated,
+  allowRoles('admin'),
+  staffController.activateStaff
 );
 
 module.exports = router;
