@@ -37,7 +37,9 @@ const users = [
 
 async function seedUsers() {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await mongoose.connect(process.env.MONGO_URI , {
+      family: 4
+    });
 
     await User.deleteMany({});
 

@@ -40,6 +40,9 @@ const sessionMiddleware = session({
   rolling: true,
   store: MongoStore.create({
     mongoUrl: process.env.MONGO_URI,
+     mongoOptions: {
+      family: 4
+    },
     collectionName: 'sessions',
     ttl: 30 * 60
   }),
