@@ -45,7 +45,12 @@
       label: 'My Profile',
       href: '/profile',
       roles: ['patient']
-    }
+    },
+    {
+  label: 'Departments',
+  href: '/departments',
+  roles: ['admin']
+}
   ];
   const searchRoles = ['admin', 'reception', 'doctor', 'nurse'];
   const notificationRoles = ['admin', 'reception', 'doctor', 'nurse'];

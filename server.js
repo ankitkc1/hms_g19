@@ -19,6 +19,7 @@ const doctorRoutes = require('./routes/doctor');
 
 const { ensureAuthenticated } = require('./middleware/authMiddleware');
 const allowRoles = require('./middleware/rolesMiddleware');
+const departmentRoutes = require('./routes/departments');
 
 const app = express();
 const server = http.createServer(app);
@@ -96,6 +97,7 @@ app.use('/staff', staffRoutes);
 app.use('/search', searchRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/doctor', doctorRoutes);
+app.use('/departments', departmentRoutes);
 
 app.get(
   '/profile',

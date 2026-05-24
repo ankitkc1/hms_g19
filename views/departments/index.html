@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Departments | HMS</title>
+
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+  />
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+  <nav class="teal darken-2 hms-navbar">
+    <div class="nav-wrapper container">
+      <a href="/dashboard" class="brand-logo">HMS</a>
+      <ul id="mainNavLinks" class="right hms-nav-links"></ul>
+    </div>
+  </nav>
+
+  <main class="container">
+    <h4>Department Management</h4>
+
+    <div class="card">
+      <div class="card-content">
+        <span class="card-title">Create Department</span>
+
+        <form id="departmentForm">
+          <div class="input-field">
+            <input id="name" type="text" required />
+            <label for="name">Department Name</label>
+          </div>
+
+          <div class="input-field">
+            <textarea id="description" class="materialize-textarea"></textarea>
+            <label for="description">Description</label>
+          </div>
+
+          <button class="btn teal darken-2" type="submit">
+            Create Department
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-content">
+        <span class="card-title">Department List</span>
+
+        <table class="striped responsive-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Description</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="departmentTable">
+            <tr>
+              <td colspan="4">Loading departments...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+
+  <script src="/js/navbar.js"></script>
+  <script src="/js/departments.js"></script>
+  <script src="/js/session-timeout.js"></script>
+</body>
+</html>
