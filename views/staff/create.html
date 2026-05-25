@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Add Staff Member | HMS</title>
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <link
+    href="https://fonts.googleapis.com/icon?family=Material+Icons"
+    rel="stylesheet"
+  />
+
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css"
+  />
+
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body class="grey lighten-4">
+
+  <nav class="teal darken-2 hms-navbar">
+    <div class="nav-wrapper container">
+      <a href="/dashboard" class="brand-logo">HMS</a>
+
+      <ul id="mainNavLinks" class="right hms-nav-links"></ul>
+    </div>
+  </nav>
+
+  <main class="container" style="margin-top: 40px;">
+
+    <div class="row">
+      <div class="col s12 m8">
+        <h4>Add Staff Member</h4>
+        <p class="grey-text text-darken-1">
+          Create new staff accounts for the hospital management system.
+        </p>
+      </div>
+
+      <div class="col s12 m4 right-align">
+        <a href="/staff" class="btn-flat">
+          <i class="material-icons left">arrow_back</i>
+          Back
+        </a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-content">
+
+        <form id="staffForm">
+
+          <div class="row">
+            <div class="input-field col s12 m6">
+              <input id="fullName" name="fullName" type="text" required />
+              <label for="fullName">Full Name</label>
+            </div>
+
+            <div class="input-field col s12 m6">
+              <input id="email" name="email" type="email" required />
+              <label for="email">Email</label>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="input-field col s12 m6">
+              <input id="password" name="password" type="password" required />
+              <label for="password">Password</label>
+            </div>
+
+            <div class="input-field col s12 m6">
+              <select id="role" name="role" required>
+                <option value="" disabled selected>Select Role</option>
+                <option value="admin">Admin</option>
+                <option value="doctor">Doctor</option>
+                <option value="nurse">Nurse</option>
+                <option value="reception">Reception</option>
+              </select>
+
+              <label for="role">Role</label>
+            </div>
+          </div>
+
+          <div class="row">
+            <div class="input-field col s12 m6">
+              <input id="department" name="department" type="text" />
+              <label for="department">Department</label>
+            </div>
+          </div>
+
+          <button class="btn teal" type="submit">
+            Create Staff Account
+          </button>
+
+        </form>
+
+      </div>
+    </div>
+
+  </main>
+
+  <script
+    src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js">
+  </script>
+
+  <script src="/js/navbar.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const roleSelect = document.querySelector('select');
+
+      M.FormSelect.init(roleSelect);
+
+      document
+        .getElementById('staffForm')
+        .addEventListener('submit', createStaff);
+    });
+
+    async function createStaff(event) {
+      event.preventDefault();
+
+      const staffForm = event.currentTarget;
+      const formData = new FormData(staffForm);
+
+      const payload = {
+        fullName: formData.get('fullName'),
+        email: formData.get('email'),
+        password: formData.get('password'),
+        role: formData.get('role'),
+        department: formData.get('department')
+      };
+
+      try {
+        const response = await fetch('/staff', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        alert(result.message || 'Staff request completed.');
+
+        if (response.ok) {
+          window.location.href = '/staff';
+        }
+      } catch (error) {
+        alert('Could not create staff account.');
+      }
+    }
+  </script>
+
+</body>
+</html>
