@@ -27,6 +27,7 @@ exports.createStaff = async (req, res) => {
   try {
     const fullName = String(req.body.fullName || '').trim();
     const email = String(req.body.email || '').trim().toLowerCase();
+    const password = String(req.body.password || '').trim();
     const role = String(req.body.role || '').trim();
     const department = String(req.body.department || 'General').trim();
  
