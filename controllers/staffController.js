@@ -27,7 +27,9 @@ exports.createStaff = async (req, res) => {
   try {
     const fullName = String(req.body.fullName || '').trim();
     const email = String(req.body.email || '').trim().toLowerCase();
-    const { password, role } = req.body;
+    const role = String(req.body.role || '').trim();
+    const department = String(req.body.department || 'General').trim();
+ 
 
     if (!fullName || !email || !password || !role) {
       return res.status(400).json({ message: 'All fields required' });
@@ -43,7 +45,8 @@ exports.createStaff = async (req, res) => {
       fullName,
       email,
       password,
-      role
+      role,
+      department: department || 'General'
     });
 
     res.status(201).json({
