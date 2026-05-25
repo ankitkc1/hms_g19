@@ -353,6 +353,73 @@ async function updateAppointmentStatus(req, res) {
   }
 }
 
+async function rescheduleAppointment(req, res) {
+  const { appointmentDate } = req.body;
+  const cleanDate = normaliseAppointmentDate(appointmentDate);
+
+  if (!cleanDate) {
+    return res.status(400).json({
+      success: false,
+      message: 'Please select a valid appointment date and time.'
+    });
+  }
+
+  if (!isValidAppointmentSlot(cleanDate)) {
+    return res.status(400).json({
+      success: false,
+      message: `Appointments must start on a ${APPOINTMENT_SLOT_MINUTES}-minute slot.`
+    });
+  }
+
+  try {
+    const appointment = await Appointment.findById(req.params.id);
+
+    if (!appointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Appointment not found.'
+      });
+    }
+
+    const slotStart = cleanDate;
+    const slotEnd = new Date(slotStart.getTime() + APPOINTMENT_SLOT_MS);
+    const previousSlotStart = new Date(slotStart.getTime() - APPOINTMENT_SLOT_MS);
+
+    const existingAppointment = await Appointment.findOne({
+      _id: { $ne: appointment._id },
+      doctor: appointment.doctor,
+      appointmentDate: {
+        $gt: previousSlotStart,
+        $lt: slotEnd
+      },
+      status: { $ne: 'Cancelled' }
+    });
+
+    if (existingAppointment) {
+      return res.status(409).json({
+        success: false,
+        message: `This doctor already has a booking within this ${APPOINTMENT_SLOT_MINUTES}-minute slot.`
+      });
+    }
+
+    appointment.appointmentDate = cleanDate;
+    appointment.status = 'Scheduled';
+
+    await appointment.save();
+
+    return res.status(200).json({
+      success: true,
+      message: 'Appointment rescheduled successfully.',
+      appointment
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: 'Could not reschedule appointment.'
+    });
+  }
+}
+
 module.exports = {
   getAppointmentsPage,
   getCreateAppointmentPage,
@@ -360,5 +427,6 @@ module.exports = {
   getDoctorAvailability,
   listAppointments,
   createAppointment,
-  updateAppointmentStatus
+  updateAppointmentStatus,
+  rescheduleAppointment
 };

@@ -16,9 +16,14 @@ const staffRoutes = require('./routes/staff');
 const searchRoutes = require('./routes/search');
 const notificationRoutes = require('./routes/notifications');
 const doctorRoutes = require('./routes/doctor');
+const profileRoutes = require('./routes/profile');
 
 const { ensureAuthenticated } = require('./middleware/authMiddleware');
 const allowRoles = require('./middleware/rolesMiddleware');
+const departmentRoutes = require('./routes/departments');
+const nurseRoutes = require('./routes/nurse');
+const auditRoutes = require('./routes/audit');
+const reportRoutes = require('./routes/reports');
 
 const app = express();
 const server = http.createServer(app);
@@ -96,16 +101,11 @@ app.use('/staff', staffRoutes);
 app.use('/search', searchRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/doctor', doctorRoutes);
-
-app.get(
-  '/profile',
-  ensureAuthenticated,
-  allowRoles('patient'),
-  (req, res) => {
-    res.send('Patient profile page');
-  }
-);
-
+app.use('/departments', departmentRoutes);
+app.use('/profile', profileRoutes);
+app.use('/nurse', nurseRoutes);
+app.use('/audit', auditRoutes);
+app.use('/reports', reportRoutes);
 app.use((req, res) => {
   res.status(404).send('Page not found');
 });

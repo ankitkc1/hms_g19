@@ -104,7 +104,17 @@ let currentUser = null;
               <option value="Cancelled" ${appointment.status === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
             </select>
           `;
-        }
+          if (['admin', 'reception'].includes(currentUser.role)) {
+              actionHtml += `
+               <button class="btn-small blue" onclick="rescheduleAppointment('${appointment._id}')">
+                 Reschedule
+               </button>
+               <button class="btn-small red" onclick="updateStatus('${appointment._id}', 'Cancelled')">
+                 Cancel
+               </button>
+            `;
+           } 
+          }
 
         const row = `
           <tr>
@@ -120,6 +130,32 @@ let currentUser = null;
         tableBody.insertAdjacentHTML('beforeend', row);
       });
     }
+
+    async function rescheduleAppointment(appointmentId) {
+  const appointmentDate = prompt(
+    'Enter new appointment date/time in this format: YYYY-MM-DDTHH:mm'
+  );
+
+  if (!appointmentDate) {
+    return;
+  }
+
+  const response = await fetch(`/appointments/${appointmentId}/reschedule`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ appointmentDate })
+  });
+
+  const result = await response.json();
+
+  if (!result.success) {
+    showMessage(result.message || 'Could not reschedule appointment.');
+    return;
+  }
+
+  showMessage(result.message, 'success');
+  loadAppointments();
+}
 
     async function init() {
       await loadCurrentUser();

@@ -29,6 +29,14 @@ const clinicalRecordSchema = new mongoose.Schema(
       required: true,
       trim: true,
       maxlength: 1500
+    },
+    patientVisible: {
+      type: Boolean,
+      default: false
+    },
+    lastEditedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
     }
   },
   {

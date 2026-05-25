@@ -1,45 +1,42 @@
 const router = require('express').Router();
 
-const staffController = require('../controllers/staffController');
+const departmentController = require('../controllers/departmentController');
 const { ensureAuthenticated } = require('../middleware/authMiddleware');
 const allowRoles = require('../middleware/rolesMiddleware');
-
 
 router.get(
   '/',
   ensureAuthenticated,
   allowRoles('admin'),
-  staffController.getStaffPage
+  departmentController.getDepartmentsPage
 );
-
 
 router.get(
   '/data',
   ensureAuthenticated,
   allowRoles('admin'),
-  staffController.getAllStaff
+  departmentController.getAllDepartments
 );
-
 
 router.post(
   '/',
   ensureAuthenticated,
   allowRoles('admin'),
-  staffController.createStaff
+  departmentController.createDepartment
 );
 
 router.patch(
   '/:id/deactivate',
   ensureAuthenticated,
   allowRoles('admin'),
-  staffController.deactivateStaff
+  departmentController.deactivateDepartment
 );
 
 router.patch(
   '/:id/activate',
   ensureAuthenticated,
   allowRoles('admin'),
-  staffController.activateStaff
+  departmentController.activateDepartment
 );
 
 module.exports = router;

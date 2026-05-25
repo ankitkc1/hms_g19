@@ -52,4 +52,11 @@ router.post(
   appointmentController.updateAppointmentStatus
 );
 
+router.patch(
+  '/:id/reschedule',
+  ensureAuthenticated,
+  allowRoles('admin', 'reception'),
+  appointmentController.rescheduleAppointment
+);
+
 module.exports = router;

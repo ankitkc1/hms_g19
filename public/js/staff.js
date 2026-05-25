@@ -47,13 +47,14 @@ async function loadStaff() {
         <td>${escapeHtml(user.fullName || '-')}</td>
         <td>${escapeHtml(user.email)}</td>
         <td>${escapeHtml(user.role)}</td>
+        <td>${user.isActive ? 'Active' : 'Inactive'}</td>
 
         <td>
           <button
-            class="btn red"
-            onclick="deleteStaff('${user._id}')"
+            class="btn ${user.isActive ? 'orange' : 'green'}"
+            onclick="toggleStaffStatus('${user._id}', ${user.isActive})"
           >
-            Delete
+            ${user.isActive ? 'Deactivate' : 'Activate'}
           </button>
         </td>
       </tr>
@@ -95,18 +96,19 @@ async function createStaff(event) {
   loadStaff();
 }
 
-async function deleteStaff(id) {
+async function toggleStaffStatus(id, isActive) {
+  const action = isActive ? 'deactivate' : 'activate';
 
   const confirmed = confirm(
-    'Are you sure you want to delete this staff member?'
+    `Are you sure you want to ${action} this staff member?`
   );
 
   if (!confirmed) {
     return;
   }
 
-  const response = await fetch(`/staff/${id}`, {
-    method: 'DELETE'
+  const response = await fetch(`/staff/${id}/${action}`, {
+    method: 'PATCH'
   });
 
   const data = await response.json();

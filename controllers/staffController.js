@@ -1,11 +1,6 @@
 const path = require('path');
 const User = require('../models/User');
 
-/*
-=====================================================
-Render Staff Page
-=====================================================
-*/
 exports.getStaffPage = (req, res) => {
 
   res.sendFile(
@@ -13,11 +8,6 @@ exports.getStaffPage = (req, res) => {
   );
 };
 
-/*
-=====================================================
-Get All Staff
-=====================================================
-*/
 exports.getAllStaff = async (req, res) => {
   try {
     const staff = await User.find({
@@ -33,11 +23,6 @@ exports.getAllStaff = async (req, res) => {
   }
 };
 
-/*
-=====================================================
-Create Staff
-=====================================================
-*/
 exports.createStaff = async (req, res) => {
   try {
     const fullName = String(req.body.fullName || '').trim();
@@ -72,19 +57,28 @@ exports.createStaff = async (req, res) => {
   }
 };
 
-/*
-=====================================================
-Delete Staff
-=====================================================
-*/
-exports.deleteStaff = async (req, res) => {
+exports.deactivateStaff = async (req, res) => {
   try {
-    await User.findByIdAndDelete(req.params.id);
+    await User.findByIdAndUpdate(req.params.id, {
+      isActive: false
+    });
 
-    res.json({ message: 'Staff deleted successfully' });
-
+    res.json({ message: 'Staff deactivated successfully' });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: 'Failed to delete staff' });
+    res.status(500).json({ message: 'Failed to deactivate staff' });
+  }
+};
+
+exports.activateStaff = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.params.id, {
+      isActive: true
+    });
+
+    res.json({ message: 'Staff activated successfully' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Failed to activate staff' });
   }
 };
