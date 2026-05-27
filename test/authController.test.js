@@ -1,4 +1,3 @@
-const { describe, it, beforeEach, afterEach } = require('node:test');
 const assert = require('node:assert/strict');
 
 const authController = require('../controllers/authController');
@@ -172,7 +171,7 @@ describe('authController', () => {
     assert.equal(res.body.message, 'Logout failed. Please try again.');
   });
 
-  it('returns the authenticated session user from', () => {
+  it('returns the authenticated session user from the current-user endpoint', () => {
     const sessionUser = {
       id: 'admin-1',
       email: 'admin@hospital.test',
