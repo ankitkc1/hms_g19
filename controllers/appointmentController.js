@@ -3,21 +3,13 @@ const mongoose = require('mongoose');
 const Appointment = require('../models/Appointment');
 const Patient = require('../models/Patient');
 const User = require('../models/User');
-const Notification = require('../models/Notification');
+const {
+  createAndEmitNotification,
+  getDocumentId
+} = require('../utils/notificationService');
 
 const APPOINTMENT_SLOT_MINUTES = 15;
 const APPOINTMENT_SLOT_MS = APPOINTMENT_SLOT_MINUTES * 60 * 1000;
-
-function getDocumentId(value) {
-  if (!value) return '';
-  if (value._id) return value._id.toString();
-  return value.toString();
-}
-
-function formatUserName(user) {
-  if (!user) return 'Hospital staff';
-  return user.fullName || user.email || 'Hospital staff';
-}
 
 function formatPatientName(patient) {
   if (!patient || typeof patient !== 'object') return 'the patient';
@@ -76,26 +68,6 @@ function getAppointmentNotificationContent(type, appointment, patient) {
   };
 }
 
-function formatNotificationPayload(notification, senderFallback) {
-  const raw = notification && typeof notification.toObject === 'function'
-    ? notification.toObject()
-    : notification || {};
-  const sender = raw.sender && (raw.sender.fullName || raw.sender.email)
-    ? raw.sender
-    : senderFallback;
-
-  return {
-    id: getDocumentId(raw._id),
-    title: raw.title,
-    message: raw.message,
-    audience: raw.audience,
-    createdAt: raw.createdAt || new Date(),
-    senderName: formatUserName(sender),
-    senderEmail: sender && sender.email ? sender.email : '',
-    read: false
-  };
-}
-
 async function getAppointmentPatient(appointment, suppliedPatient) {
   if (suppliedPatient) return suppliedPatient;
 
@@ -116,29 +88,22 @@ async function notifyDoctorAboutAppointment(req, appointment, type, suppliedPati
   const doctorId = getDocumentId(appointment.doctor);
   const sender = req.session && req.session.user;
 
-  if (!io || !doctorId || !sender || !sender.id) {
+  if (!doctorId || !getDocumentId(sender)) {
     return;
   }
 
   try {
     const patient = await getAppointmentPatient(appointment, suppliedPatient);
     const content = getAppointmentNotificationContent(type, appointment, patient);
-    const notification = await Notification.create({
+    await createAndEmitNotification({
+      io,
       title: content.title,
       message: content.message,
-      sender: sender.id,
+      sender,
       audience: 'selected',
-      recipients: [doctorId]
+      recipients: [doctorId],
+      senderNameFallback: 'Hospital staff'
     });
-
-    if (notification && typeof notification.populate === 'function') {
-      await notification.populate('sender', 'fullName email role');
-    }
-
-    io.to(`user:${doctorId}`).emit(
-      'notification:new',
-      formatNotificationPayload(notification, sender)
-    );
   } catch (error) {
     console.error('Appointment notification failed:', error.message);
   }
