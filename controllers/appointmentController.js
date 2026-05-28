@@ -3,9 +3,146 @@ const mongoose = require('mongoose');
 const Appointment = require('../models/Appointment');
 const Patient = require('../models/Patient');
 const User = require('../models/User');
+const Notification = require('../models/Notification');
 
 const APPOINTMENT_SLOT_MINUTES = 15;
 const APPOINTMENT_SLOT_MS = APPOINTMENT_SLOT_MINUTES * 60 * 1000;
+
+function getDocumentId(value) {
+  if (!value) return '';
+  if (value._id) return value._id.toString();
+  return value.toString();
+}
+
+function formatUserName(user) {
+  if (!user) return 'Hospital staff';
+  return user.fullName || user.email || 'Hospital staff';
+}
+
+function formatPatientName(patient) {
+  if (!patient || typeof patient !== 'object') return 'the patient';
+
+  const name = `${patient.firstName || ''} ${patient.lastName || ''}`.trim();
+  return name || patient.patientId || 'the patient';
+}
+
+function formatAppointmentDate(value) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return 'the selected time';
+  }
+
+  return new Intl.DateTimeFormat('en-AU', {
+    dateStyle: 'medium',
+    timeStyle: 'short'
+  }).format(date);
+}
+
+function truncateNotificationMessage(message) {
+  if (message.length <= 1000) return message;
+  return `${message.slice(0, 997)}...`;
+}
+
+function getAppointmentNotificationContent(type, appointment, patient) {
+  const patientName = formatPatientName(patient);
+  const appointmentTime = formatAppointmentDate(appointment.appointmentDate);
+  const reason = String(appointment.reason || '').trim();
+  const reasonText = reason ? ` Reason: ${reason}` : '';
+
+  if (type === 'cancelled') {
+    return {
+      title: 'Appointment cancelled',
+      message: truncateNotificationMessage(
+        `Appointment for ${patientName} on ${appointmentTime} has been cancelled.${reasonText}`
+      )
+    };
+  }
+
+  if (type === 'rescheduled') {
+    return {
+      title: 'Appointment rescheduled',
+      message: truncateNotificationMessage(
+        `Appointment for ${patientName} has been rescheduled to ${appointmentTime}.${reasonText}`
+      )
+    };
+  }
+
+  return {
+    title: 'Appointment scheduled',
+    message: truncateNotificationMessage(
+      `Appointment for ${patientName} has been scheduled for ${appointmentTime}.${reasonText}`
+    )
+  };
+}
+
+function formatNotificationPayload(notification, senderFallback) {
+  const raw = notification && typeof notification.toObject === 'function'
+    ? notification.toObject()
+    : notification || {};
+  const sender = raw.sender && (raw.sender.fullName || raw.sender.email)
+    ? raw.sender
+    : senderFallback;
+
+  return {
+    id: getDocumentId(raw._id),
+    title: raw.title,
+    message: raw.message,
+    audience: raw.audience,
+    createdAt: raw.createdAt || new Date(),
+    senderName: formatUserName(sender),
+    senderEmail: sender && sender.email ? sender.email : '',
+    read: false
+  };
+}
+
+async function getAppointmentPatient(appointment, suppliedPatient) {
+  if (suppliedPatient) return suppliedPatient;
+
+  const patientId = getDocumentId(appointment.patient);
+  if (!patientId) return null;
+
+  try {
+    return await Patient.findById(patientId);
+  } catch (error) {
+    return null;
+  }
+}
+
+async function notifyDoctorAboutAppointment(req, appointment, type, suppliedPatient) {
+  const io = req.app && typeof req.app.get === 'function'
+    ? req.app.get('io')
+    : null;
+  const doctorId = getDocumentId(appointment.doctor);
+  const sender = req.session && req.session.user;
+
+  if (!io || !doctorId || !sender || !sender.id) {
+    return;
+  }
+
+  try {
+    const patient = await getAppointmentPatient(appointment, suppliedPatient);
+    const content = getAppointmentNotificationContent(type, appointment, patient);
+    const notification = await Notification.create({
+      title: content.title,
+      message: content.message,
+      sender: sender.id,
+      audience: 'selected',
+      recipients: [doctorId]
+    });
+
+    if (notification && typeof notification.populate === 'function') {
+      await notification.populate('sender', 'fullName email role');
+    }
+
+    io.to(`user:${doctorId}`).emit(
+      'notification:new',
+      formatNotificationPayload(notification, sender)
+    );
+  } catch (error) {
+    console.error('Appointment notification failed:', error.message);
+  }
+}
 
 function getAppointmentsPage(req, res) {
   return res.sendFile(path.join(__dirname, '..', 'views', 'appointments', 'index.html'));
@@ -288,6 +425,8 @@ async function createAppointment(req, res) {
       createdBy: req.session.user.id
     });
 
+    await notifyDoctorAboutAppointment(req, appointment, 'scheduled', patientExists);
+
     return res.status(201).json({
       success: true,
       message: 'Appointment created successfully.',
@@ -330,7 +469,7 @@ async function updateAppointmentStatus(req, res) {
 
     if (
       req.session.user.role === 'doctor' &&
-      appointment.doctor.toString() !== req.session.user.id
+      getDocumentId(appointment.doctor) !== req.session.user.id
     ) {
       return res.status(403).json({
         success: false,
@@ -338,8 +477,20 @@ async function updateAppointmentStatus(req, res) {
       });
     }
 
+    const previousStatus = appointment.status;
     appointment.status = req.body.status;
     await appointment.save();
+
+    if (
+      previousStatus !== appointment.status &&
+      ['Scheduled', 'Cancelled'].includes(appointment.status)
+    ) {
+      await notifyDoctorAboutAppointment(
+        req,
+        appointment,
+        appointment.status.toLowerCase()
+      );
+    }
 
     return res.status(200).json({
       success: true,
@@ -406,6 +557,8 @@ async function rescheduleAppointment(req, res) {
     appointment.status = 'Scheduled';
 
     await appointment.save();
+
+    await notifyDoctorAboutAppointment(req, appointment, 'rescheduled');
 
     return res.status(200).json({
       success: true,

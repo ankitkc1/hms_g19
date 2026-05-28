@@ -112,5 +112,5 @@ app.use((req, res) => {
 
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
-  console.log(process.env.MONGO_URI);
+  //console.log(process.env.MONGO_URI);
 });
