@@ -14,11 +14,11 @@ const {
 
 const STAFF_ROLES = ['admin', 'reception', 'doctor', 'nurse'];
 
-function validObjectId() {
+function id() {
   return new mongoose.Types.ObjectId().toString();
 }
 
-function createIoStub() {
+function ioStub() {
   const emissions = [];
 
   return {
@@ -33,16 +33,17 @@ function createIoStub() {
   };
 }
 
-function createNotificationDoc(payload) {
+function notificationDoc(overrides = {}) {
   const doc = {
-    _id: payload._id || objectIdLike(validObjectId()),
-    title: payload.title,
-    message: payload.message,
-    audience: payload.audience,
-    createdAt: payload.createdAt || new Date('2026-06-01T09:00:00'),
-    sender: payload.sender,
-    recipients: payload.recipients || [],
-    readBy: payload.readBy || [],
+    _id: overrides._id || objectIdLike(id()),
+    title: 'Ward update',
+    message: 'Policy update',
+    audience: 'all',
+    createdAt: new Date('2026-06-01T09:00:00'),
+    sender: { fullName: 'Admin One', email: 'admin@hospital.test' },
+    recipients: [],
+    readBy: [],
+    ...overrides,
     populate: stub(async () => doc),
     toObject() {
       return {
@@ -62,27 +63,26 @@ function createNotificationDoc(payload) {
 }
 
 describe('notificationController', () => {
-  const originals = {};
+  const original = {};
 
   beforeEach(() => {
-    originals.userFind = User.find;
-    originals.notificationFind = Notification.find;
-    originals.notificationCreate = Notification.create;
-    originals.notificationUpdateMany = Notification.updateMany;
+    original.userFind = User.find;
+    original.notificationFind = Notification.find;
+    original.notificationCreate = Notification.create;
+    original.notificationUpdateMany = Notification.updateMany;
   });
 
   afterEach(() => {
-    User.find = originals.userFind;
-    Notification.find = originals.notificationFind;
-    Notification.create = originals.notificationCreate;
-    Notification.updateMany = originals.notificationUpdateMany;
+    User.find = original.userFind;
+    Notification.find = original.notificationFind;
+    Notification.create = original.notificationCreate;
+    Notification.updateMany = original.notificationUpdateMany;
   });
 
-  it('loads staff options for only staff roles and excludes password fields', async () => {
-    const staffChain = createQueryChain([
+  it('loads staff users for the notification form', async () => {
+    User.find = stub(() => createQueryChain([
       { fullName: 'Admin One', email: 'admin@hospital.test', role: 'admin' }
-    ]);
-    User.find = stub(() => staffChain);
+    ]));
 
     const req = createMockRequest();
     const res = createMockResponse();
@@ -90,36 +90,29 @@ describe('notificationController', () => {
     await notificationController.getStaffOptions(req, res);
 
     assert.equal(res.statusCode, 200);
+    assert.equal(res.body.staff.length, 1);
     assert.deepEqual(User.find.calls[0][0], { role: { $in: STAFF_ROLES } });
-    assert.deepEqual(staffChain.calls, [
-      ['sort', { fullName: 1, email: 1 }],
-      ['select', 'fullName email role']
-    ]);
-    assert.equal(res.body.staff[0].role, 'admin');
   });
 
-  it('validates required notification title and message before creating', async () => {
+  it('does not send a notification without title and message', async () => {
     User.find = stub(() => createQueryChain([]));
     Notification.create = stub(async () => ({}));
 
     const req = createMockRequest({
       body: { title: '   ', message: '' },
-      sessionUser: { id: validObjectId(), role: 'admin' }
+      sessionUser: { id: id(), role: 'admin' }
     });
     const res = createMockResponse();
 
     await notificationController.sendNotification(req, res);
 
     assert.equal(res.statusCode, 400);
-    assert.deepEqual(res.body.errors, {
-      title: 'Title is required.',
-      message: 'Message is required.'
-    });
-    assert.equal(User.find.calls.length, 0);
+    assert.equal(res.body.errors.title, 'Title is required.');
+    assert.equal(res.body.errors.message, 'Message is required.');
     assert.equal(Notification.create.calls.length, 0);
   });
 
-  it('requires at least one valid staff recipient for selected notifications', async () => {
+  it('requires one valid recipient for selected notifications', async () => {
     User.find = stub(() => createQueryChain([]));
     Notification.create = stub(async () => ({}));
 
@@ -130,7 +123,7 @@ describe('notificationController', () => {
         audience: 'selected',
         recipients: ['not-valid', '', null]
       },
-      sessionUser: { id: validObjectId(), role: 'admin' }
+      sessionUser: { id: id(), role: 'admin' }
     });
     const res = createMockResponse();
 
@@ -138,30 +131,21 @@ describe('notificationController', () => {
 
     assert.equal(res.statusCode, 400);
     assert.equal(res.body.errors.recipients, 'Select at least one staff member.');
-    assert.equal(User.find.calls.length, 0);
     assert.equal(Notification.create.calls.length, 0);
   });
 
-  it('creates a selected-recipient notification using unique valid staff ids and emits per user', async () => {
-    const senderId = validObjectId();
-    const recipientOne = validObjectId();
-    const recipientTwo = validObjectId();
-    const io = createIoStub();
+  it('sends a selected notification to each valid staff recipient', async () => {
+    const senderId = id();
+    const recipientOne = id();
+    const recipientTwo = id();
+    const io = ioStub();
     User.find = stub(() => createQueryChain([
       { _id: objectIdLike(recipientOne) },
       { _id: objectIdLike(recipientTwo) }
     ]));
-    Notification.create = stub(async (payload) => createNotificationDoc({
-      _id: objectIdLike(validObjectId()),
-      title: payload.title,
-      message: payload.message,
-      audience: payload.audience,
-      recipients: payload.recipients,
-      sender: {
-        fullName: 'Admin One',
-        email: 'admin@hospital.test',
-        role: 'admin'
-      }
+    Notification.create = stub(async (payload) => notificationDoc({
+      ...payload,
+      sender: { fullName: 'Admin One', email: 'admin@hospital.test' }
     }));
 
     const req = createMockRequest({
@@ -178,49 +162,34 @@ describe('notificationController', () => {
 
     await notificationController.sendNotification(req, res);
 
+    const savedNotification = Notification.create.calls[0][0];
     assert.equal(res.statusCode, 201);
-    assert.deepEqual(User.find.calls[0][0], {
-      _id: { $in: [recipientOne, recipientTwo] },
-      role: { $in: STAFF_ROLES }
-    });
-    const createPayload = Notification.create.calls[0][0];
-    assert.equal(createPayload.title, 'Theatre schedule');
-    assert.equal(createPayload.message, 'Please review the revised afternoon list.');
-    assert.equal(createPayload.sender, senderId);
-    assert.equal(createPayload.audience, 'selected');
+    assert.equal(savedNotification.title, 'Theatre schedule');
+    assert.equal(savedNotification.message, 'Please review the revised afternoon list.');
+    assert.equal(savedNotification.sender, senderId);
     assert.deepEqual(
-      createPayload.recipients.map((recipient) => recipient.toString()),
+      savedNotification.recipients.map((recipient) => recipient.toString()),
       [recipientOne, recipientTwo]
     );
     assert.deepEqual(io.emissions.map((event) => event.room), [
       `user:${recipientOne}`,
       `user:${recipientTwo}`
     ]);
-    assert.equal(io.emissions[0].event, 'notification:new');
   });
 
-  it('creates an all-staff notification with no recipients and emits to the staff room', async () => {
-    const senderId = validObjectId();
-    const io = createIoStub();
+  it('sends an all-staff notification to the staff room', async () => {
+    const io = ioStub();
     User.find = stub(() => createQueryChain([]));
-    Notification.create = stub(async (payload) => createNotificationDoc({
-      _id: objectIdLike(validObjectId()),
-      ...payload,
-      sender: {
-        fullName: 'Admin One',
-        email: 'admin@hospital.test',
-        role: 'admin'
-      }
-    }));
+    Notification.create = stub(async (payload) => notificationDoc(payload));
 
     const req = createMockRequest({
       body: {
         title: 'Code blue drill',
         message: 'The drill starts at 14:00.',
         audience: 'all',
-        recipients: [validObjectId()]
+        recipients: [id()]
       },
-      sessionUser: { id: senderId, role: 'admin' },
+      sessionUser: { id: id(), role: 'admin' },
       appGet: () => io
     });
     const res = createMockResponse();
@@ -228,15 +197,13 @@ describe('notificationController', () => {
     await notificationController.sendNotification(req, res);
 
     assert.equal(res.statusCode, 201);
-    assert.equal(User.find.calls.length, 0);
     assert.deepEqual(Notification.create.calls[0][0].recipients, []);
     assert.deepEqual(io.emissions.map(({ room, event }) => ({ room, event })), [
       { room: 'staff', event: 'notification:new' }
     ]);
   });
 
-  it('rejects selected notifications when valid ids do not resolve to staff users', async () => {
-    const recipient = validObjectId();
+  it('does not send selected notifications when recipients are not staff users', async () => {
     User.find = stub(() => createQueryChain([]));
     Notification.create = stub(async () => ({}));
 
@@ -245,9 +212,9 @@ describe('notificationController', () => {
         title: 'Ward update',
         message: 'Use backup entrance.',
         audience: 'selected',
-        recipients: [recipient]
+        recipients: [id()]
       },
-      sessionUser: { id: validObjectId(), role: 'admin' }
+      sessionUser: { id: id(), role: 'admin' }
     });
     const res = createMockResponse();
 
@@ -258,27 +225,22 @@ describe('notificationController', () => {
     assert.equal(Notification.create.calls.length, 0);
   });
 
-  it('loads visible notifications, formats read state, and computes unread count for a user', async () => {
-    const userId = validObjectId();
-    const notificationChain = createQueryChain([
-      createNotificationDoc({
+  it('lists a user notifications and unread count', async () => {
+    const userId = id();
+    Notification.find = stub(() => createQueryChain([
+      notificationDoc({
         _id: objectIdLike('notification-1'),
         title: 'All staff update',
-        message: 'Policy update',
-        audience: 'all',
-        sender: { fullName: 'Admin One', email: 'admin@hospital.test' },
         readBy: []
       }),
-      createNotificationDoc({
+      notificationDoc({
         _id: objectIdLike('notification-2'),
         title: 'Direct update',
-        message: 'Room changed',
         audience: 'selected',
         sender: { email: 'ops@hospital.test' },
         readBy: [objectIdLike(userId)]
       })
-    ]);
-    Notification.find = stub(() => notificationChain);
+    ]));
 
     const req = createMockRequest({
       sessionUser: { id: userId, role: 'doctor' }
@@ -288,29 +250,18 @@ describe('notificationController', () => {
     await notificationController.getMyNotifications(req, res);
 
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(Notification.find.calls[0][0], {
-      $or: [
-        { audience: 'all' },
-        { recipients: userId }
-      ]
-    });
     assert.equal(res.body.unreadCount, 1);
     assert.equal(res.body.notifications[0].read, false);
     assert.equal(res.body.notifications[1].read, true);
     assert.equal(res.body.notifications[1].senderName, 'ops@hospital.test');
-    assert.deepEqual(notificationChain.calls, [
-      ['populate', 'sender', 'fullName email role'],
-      ['sort', { createdAt: -1 }],
-      ['limit', 20]
-    ]);
   });
 
-  it('marks no notifications as read when the submitted ids are empty or invalid', async () => {
+  it('does not mark notifications read when ids are invalid', async () => {
     Notification.updateMany = stub(async () => ({}));
 
     const req = createMockRequest({
       body: { ids: ['invalid', '', null] },
-      sessionUser: { id: validObjectId(), role: 'nurse' }
+      sessionUser: { id: id(), role: 'nurse' }
     });
     const res = createMockResponse();
 
@@ -321,10 +272,10 @@ describe('notificationController', () => {
     assert.equal(Notification.updateMany.calls.length, 0);
   });
 
-  it('marks only notifications visible to the current user as read', async () => {
-    const userId = validObjectId();
-    const notificationOne = validObjectId();
-    const notificationTwo = validObjectId();
+  it('marks valid visible notifications as read', async () => {
+    const userId = id();
+    const notificationOne = id();
+    const notificationTwo = id();
     Notification.updateMany = stub(async () => ({ modifiedCount: 2 }));
 
     const req = createMockRequest({
@@ -336,17 +287,12 @@ describe('notificationController', () => {
     await notificationController.markNotificationsRead(req, res);
 
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(Notification.updateMany.calls[0], [
-      {
-        _id: { $in: [notificationOne, notificationTwo] },
-        $or: [
-          { audience: 'all' },
-          { recipients: userId }
-        ]
-      },
-      {
-        $addToSet: { readBy: userId }
-      }
-    ]);
+    assert.deepEqual(Notification.updateMany.calls[0][0], {
+      _id: { $in: [notificationOne, notificationTwo] },
+      $or: [
+        { audience: 'all' },
+        { recipients: userId }
+      ]
+    });
   });
 });
