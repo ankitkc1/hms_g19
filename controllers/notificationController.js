@@ -2,46 +2,17 @@ const path = require('path');
 const mongoose = require('mongoose');
 const Notification = require('../models/Notification');
 const User = require('../models/User');
+const {
+  createAndEmitNotification,
+  formatNotification,
+  getVisibleNotificationQuery
+} = require('../utils/notificationService');
 
 const STAFF_ROLES = ['admin', 'reception', 'doctor', 'nurse'];
 const NOTIFICATION_LIMIT = 20;
 
 function getNotificationPage(req, res) {
   return res.sendFile(path.join(__dirname, '..', 'views', 'notifications', 'notif.html'));
-}
-
-function formatUserName(user) {
-  if (!user) return 'Administrator';
-  return user.fullName || user.email || 'Administrator';
-}
-
-function formatNotification(notification, currentUserId) {
-  const raw = typeof notification.toObject === 'function'
-    ? notification.toObject()
-    : notification;
-  const readBy = raw.readBy || [];
-
-  return {
-    id: raw._id.toString(),
-    title: raw.title,
-    message: raw.message,
-    audience: raw.audience,
-    createdAt: raw.createdAt,
-    senderName: formatUserName(raw.sender),
-    senderEmail: raw.sender && raw.sender.email ? raw.sender.email : '',
-    read: currentUserId
-      ? readBy.some((userId) => userId.toString() === currentUserId.toString())
-      : false
-  };
-}
-
-function getVisibleNotificationQuery(userId) {
-  return {
-    $or: [
-      { audience: 'all' },
-      { recipients: userId }
-    ]
-  };
 }
 
 function getCleanRecipientIds(recipients) {
@@ -92,7 +63,7 @@ async function getMyNotifications(req, res) {
     return res.status(200).json({
       success: true,
       notifications: notifications.map((notification) =>
-        formatNotification(notification, userId)
+        formatNotification(notification, { currentUserId: userId })
       ),
       unreadCount
     });
@@ -145,30 +116,16 @@ async function sendNotification(req, res) {
       });
     }
 
-    const notification = await Notification.create({
+    const { payload } = await createAndEmitNotification({
+      io: req.app.get('io'),
       title,
       message,
-      sender: req.session.user.id,
+      sender: req.session.user,
       audience,
       recipients: audience === 'selected'
         ? recipients.map((staffUser) => staffUser._id)
         : []
     });
-
-    await notification.populate('sender', 'fullName email role');
-
-    const payload = formatNotification(notification);
-    const io = req.app.get('io');
-
-    if (io) {
-      if (audience === 'all') {
-        io.to('staff').emit('notification:new', payload);
-      } else {
-        recipients.forEach((staffUser) => {
-          io.to(`user:${staffUser._id.toString()}`).emit('notification:new', payload);
-        });
-      }
-    }
 
     return res.status(201).json({
       success: true,
