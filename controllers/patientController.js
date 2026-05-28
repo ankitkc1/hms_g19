@@ -1,5 +1,6 @@
 const path = require('path');
 const Patient = require('../models/Patient');
+const User = require('../models/User');
 
 function getCreatePatient(req, res) {
   return res.sendFile(path.join(__dirname, '..', 'views', 'patients', 'create.html'));
@@ -28,6 +29,10 @@ function validatePatientInput(data) {
     errors.phone = 'Phone number is required.';
   }
 
+  if (!data.email) {
+  errors.email = 'Email is required for patient login.';
+  }
+ 
   if (!data.address) {
     errors.address = 'Address is required.';
   }
@@ -74,17 +79,26 @@ async function createPatient(req, res) {
   try {
     const patientId = await generatePatientId();
 
-    const patient = await Patient.create({
-      ...patientData,
-      patientId,
-      createdBy: req.session.user.id
-    });
+  const patientUser = await User.create({
+    fullName: `${patientData.firstName} ${patientData.lastName}`,
+    email: patientData.email,
+    password: 'password123',
+    role: 'patient'
+  });
 
-    return res.status(201).json({
-      success: true,
-      message: `Patient registered successfully. Patient ID: ${patient.patientId}`,
-      patient
-    });
+  const patient = await Patient.create({
+    ...patientData,
+    patientId,
+    createdBy: req.session.user.id,
+    linkedUser: patientUser._id
+  });
+
+  return res.status(201).json({
+    success: true,
+    message: `Patient registered successfully. Patient ID: ${patient.patientId}`,
+    patient
+  });
+  
   } catch (error) {
     if (error.code === 11000) {
       return res.status(409).json({
