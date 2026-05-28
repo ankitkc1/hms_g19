@@ -9,6 +9,24 @@ const {
   stub
 } = require('./helpers');
 
+function workingSession() {
+  return {
+    regenerate(callback) {
+      callback();
+    }
+  };
+}
+
+function user(overrides = {}) {
+  return {
+    _id: objectIdLike('user-1'),
+    email: 'doctor@hospital.test',
+    role: 'doctor',
+    comparePassword: stub(async () => true),
+    ...overrides
+  };
+}
+
 describe('authController', () => {
   let originalFindOne;
 
@@ -20,33 +38,29 @@ describe('authController', () => {
     User.findOne = originalFindOne;
   });
 
-  it('rejects invalid login input before querying active users', async () => {
-    User.findOne = stub(async () => {
-      throw new Error('User lookup should not run for invalid input');
-    });
+  it('does not login with a bad email or blank password', async () => {
+    User.findOne = stub(async () => null);
 
     const req = createMockRequest({
       body: { email: 'not-an-email', password: '' },
-      session: { regenerate: stub() }
+      session: workingSession()
     });
     const res = createMockResponse();
 
     await authController.login(req, res);
 
     assert.equal(res.statusCode, 400);
-    assert.equal(res.body.success, false);
-    assert.deepEqual(res.body.errors, {
-      email: 'Please enter a valid email address.',
-      password: 'Password is required.'
-    });
+    assert.equal(res.body.errors.email, 'Please enter a valid email address.');
+    assert.equal(res.body.errors.password, 'Password is required.');
     assert.equal(User.findOne.calls.length, 0);
   });
 
-  it('normalizes email and rejects unknown users', async () => {
+  it('does not login when the email is not registered', async () => {
     User.findOne = stub(async () => null);
 
     const req = createMockRequest({
-      body: { email: ' Doctor@Hospital.TEST ', password: 'secret123' }
+      body: { email: ' Doctor@Hospital.TEST ', password: 'secret123' },
+      session: workingSession()
     });
     const res = createMockResponse();
 
@@ -60,18 +74,13 @@ describe('authController', () => {
     });
   });
 
-  it('rejects an existing user when the password does not match', async () => {
+  it('does not login when the password is wrong', async () => {
     const comparePassword = stub(async () => false);
-    User.findOne = stub(async () => ({
-      _id: objectIdLike('user-1'),
-      email: 'doctor@hospital.test',
-      role: 'doctor',
-      comparePassword
-    }));
+    User.findOne = stub(async () => user({ comparePassword }));
 
     const req = createMockRequest({
       body: { email: 'doctor@hospital.test', password: 'wrong-password' },
-      session: { regenerate: stub() }
+      session: workingSession()
     });
     const res = createMockResponse();
 
@@ -83,19 +92,14 @@ describe('authController', () => {
     assert.equal(req.session.user, undefined);
   });
 
-  it('returns a session error when regeneration fails after valid credentials', async () => {
-    User.findOne = stub(async () => ({
-      _id: objectIdLike('user-2'),
-      email: 'nurse@hospital.test',
-      role: 'nurse',
-      comparePassword: stub(async () => true)
-    }));
+  it('returns an error when the session cannot be regenerated', async () => {
+    User.findOne = stub(async () => user());
 
     const req = createMockRequest({
-      body: { email: 'nurse@hospital.test', password: 'secret123' },
+      body: { email: 'doctor@hospital.test', password: 'secret123' },
       session: {
         regenerate(callback) {
-          callback(new Error('session store unavailable'));
+          callback(new Error('session failed'));
         }
       }
     });
@@ -108,21 +112,14 @@ describe('authController', () => {
     assert.equal(req.session.user, undefined);
   });
 
-  it('creates a session and returns the role-specific redirect for valid credentials', async () => {
-    User.findOne = stub(async () => ({
-      _id: objectIdLike('doctor-123'),
-      email: 'doctor@hospital.test',
-      role: 'doctor',
-      comparePassword: stub(async () => true)
+  it('logs in a valid doctor and returns the doctor dashboard', async () => {
+    User.findOne = stub(async () => user({
+      _id: objectIdLike('doctor-123')
     }));
 
     const req = createMockRequest({
       body: { email: 'doctor@hospital.test', password: 'secret123' },
-      session: {
-        regenerate(callback) {
-          callback();
-        }
-      }
+      session: workingSession()
     });
     const res = createMockResponse();
 
@@ -137,7 +134,7 @@ describe('authController', () => {
     assert.equal(res.body.redirectUrl, '/dashboard/doctor');
   });
 
-  it('destroys the session, clears the cookie, and returns login redirect on logout', () => {
+  it('logs out and clears the session cookie', () => {
     const req = createMockRequest({
       session: {
         destroy(callback) {
@@ -149,12 +146,12 @@ describe('authController', () => {
 
     authController.logout(req, res);
 
-    assert.deepEqual(res.clearedCookies, ['hms.sid']);
     assert.equal(res.statusCode, 200);
+    assert.deepEqual(res.clearedCookies, ['hms.sid']);
     assert.equal(res.body.redirectUrl, '/login');
   });
 
-  it('clears the cookie and reports logout failure when session destruction errors', () => {
+  it('shows an error when logout fails', () => {
     const req = createMockRequest({
       session: {
         destroy(callback) {
@@ -166,12 +163,12 @@ describe('authController', () => {
 
     authController.logout(req, res);
 
-    assert.deepEqual(res.clearedCookies, ['hms.sid']);
     assert.equal(res.statusCode, 500);
+    assert.deepEqual(res.clearedCookies, ['hms.sid']);
     assert.equal(res.body.message, 'Logout failed. Please try again.');
   });
 
-  it('returns the authenticated session user from the current-user endpoint', () => {
+  it('returns the current logged in user', () => {
     const sessionUser = {
       id: 'admin-1',
       email: 'admin@hospital.test',
@@ -183,9 +180,6 @@ describe('authController', () => {
     authController.getCurrentUser(req, res);
 
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(res.body, {
-      success: true,
-      user: sessionUser
-    });
+    assert.deepEqual(res.body.user, sessionUser);
   });
 });

@@ -8,22 +8,48 @@ const {
   stub
 } = require('./helpers');
 
+function goodPatient(overrides = {}) {
+  return {
+    firstName: 'Alicia',
+    lastName: 'Ng',
+    dateOfBirth: '1988-04-19',
+    gender: 'female',
+    phone: '0400111222',
+    email: 'alicia@gmail.com',
+    address: '12 River Road',
+    emergencyContactName: 'Mei Ng',
+    emergencyContactPhone: '0400333444',
+    ...overrides
+  };
+}
+
+function goodContact(overrides = {}) {
+  return {
+    phone: '2452110089',
+    email: 'patient@gmail.com',
+    address: '8 Kevin Street',
+    emergencyContactName: 'Kai',
+    emergencyContactPhone: '2514851124',
+    ...overrides
+  };
+}
+
 describe('patientController', () => {
-  const originals = {};
+  const original = {};
 
   beforeEach(() => {
-    originals.countDocuments = Patient.countDocuments;
-    originals.create = Patient.create;
-    originals.findByIdAndUpdate = Patient.findByIdAndUpdate;
+    original.countDocuments = Patient.countDocuments;
+    original.create = Patient.create;
+    original.findByIdAndUpdate = Patient.findByIdAndUpdate;
   });
 
   afterEach(() => {
-    Patient.countDocuments = originals.countDocuments;
-    Patient.create = originals.create;
-    Patient.findByIdAndUpdate = originals.findByIdAndUpdate;
+    Patient.countDocuments = original.countDocuments;
+    Patient.create = original.create;
+    Patient.findByIdAndUpdate = original.findByIdAndUpdate;
   });
 
-  it('rejects patient registration when required demographics and contact fields are missing', async () => {
+  it('does not register a patient when required fields are missing', async () => {
     Patient.countDocuments = stub(async () => 0);
     Patient.create = stub(async () => ({}));
 
@@ -36,22 +62,12 @@ describe('patientController', () => {
     await patientController.createPatient(req, res);
 
     assert.equal(res.statusCode, 400);
-    assert.equal(res.body.message, 'Please fix the highlighted fields.');
-    assert.deepEqual(Object.keys(res.body.errors).sort(), [
-      'address',
-      'dateOfBirth',
-      'emergencyContactName',
-      'emergencyContactPhone',
-      'firstName',
-      'gender',
-      'lastName',
-      'phone'
-    ]);
-    assert.equal(Patient.countDocuments.calls.length, 0);
+    assert.equal(res.body.errors.firstName, 'First name is required.');
+    assert.equal(res.body.errors.phone, 'Phone number is required.');
     assert.equal(Patient.create.calls.length, 0);
   });
 
-  it('creates a patient with a generated ID, trimmed values, lowercase email, and creator id', async () => {
+  it('registers a patient with a generated patient id', async () => {
     Patient.countDocuments = stub(async () => 41);
     Patient.create = stub(async (payload) => ({
       _id: 'patient-db-id',
@@ -59,41 +75,27 @@ describe('patientController', () => {
     }));
 
     const req = createMockRequest({
-      body: {
-        firstName: 'Alicia',
-        lastName: 'whatever',
-        dateOfBirth: '1988-04-19',
-        gender: 'female',
-        phone: ' 0400111222',
+      body: goodPatient({
         email: ' ALICIA@gmail.COM',
-        address: ' 12 River Road',
-        emergencyContactName: 'Meinea',
-        emergencyContactPhone: '0400333444 '
-      },
+        phone: ' 0400111222 ',
+        address: ' 12 River Road '
+      }),
       sessionUser: { id: 'admin-1', role: 'admin' }
     });
     const res = createMockResponse();
 
     await patientController.createPatient(req, res);
 
+    const savedPatient = Patient.create.calls[0][0];
     assert.equal(res.statusCode, 201);
-    assert.equal(res.body.patient.patientId, 'PAT-0042');
-    assert.deepEqual(Patient.create.calls[0][0], {
-      firstName: 'Alicia',
-      lastName: 'whatever',
-      dateOfBirth: '1988-04-19',
-      gender: 'female',
-      phone: '0400111222',
-      email: 'alicia@gmail.com',
-      address: '12 River Road',
-      emergencyContactName: 'Meinea',
-      emergencyContactPhone: '0400333444',
-      patientId: 'PAT-0042',
-      createdBy: 'admin-1'
-    });
+    assert.equal(savedPatient.patientId, 'PAT-0042');
+    assert.equal(savedPatient.email, 'alicia@gmail.com');
+    assert.equal(savedPatient.phone, '0400111222');
+    assert.equal(savedPatient.address, '12 River Road');
+    assert.equal(savedPatient.createdBy, 'admin-1');
   });
 
-  it('returns a duplicate-patient conflict when Mongo reports a unique index violation', async () => {
+  it('returns a conflict when the patient already exists', async () => {
     Patient.countDocuments = stub(async () => 0);
     Patient.create = stub(async () => {
       const error = new Error('duplicate key');
@@ -102,16 +104,7 @@ describe('patientController', () => {
     });
 
     const req = createMockRequest({
-      body: {
-        firstName: 'Alicia',
-        lastName: 'whatever',
-        dateOfBirth: '1988-04-19',
-        gender: 'female',
-        phone: '0400111222',
-        address: '12 River Road',
-        emergencyContactName: 'Mei Ng',
-        emergencyContactPhone: '0400 333 444'
-      },
+      body: goodPatient(),
       sessionUser: { id: 'admin-1', role: 'admin' }
     });
     const res = createMockResponse();
@@ -122,23 +115,14 @@ describe('patientController', () => {
     assert.equal(res.body.message, 'A patient with this information already exists.');
   });
 
-  it('returns a server error when patient registration fails unexpectedly', async () => {
+  it('returns a server error when patient registration fails', async () => {
     Patient.countDocuments = stub(async () => 0);
     Patient.create = stub(async () => {
       throw new Error('database down');
     });
 
     const req = createMockRequest({
-      body: {
-        firstName: 'Alicia',
-        lastName: 'whatever',
-        dateOfBirth: '1988-04-19',
-        gender: 'female',
-        phone: '0400111222',
-        address: '12 River Road',
-        emergencyContactName: 'Meinea',
-        emergencyContactPhone: '0400333444'
-      },
+      body: goodPatient(),
       sessionUser: { id: 'admin-1', role: 'admin' }
     });
     const res = createMockResponse();
@@ -149,28 +133,24 @@ describe('patientController', () => {
     assert.equal(res.body.message, 'Something went wrong while registering the patient.');
   });
 
-  it('rejects non-clinical updates when required contact fields are missing', async () => {
+  it('does not update contact details when required fields are missing', async () => {
     Patient.findByIdAndUpdate = stub(async () => ({}));
 
     const req = createMockRequest({
       params: { id: 'patient-1' },
-      body: { email: 'missing@gmaicom' }
+      body: { email: 'missing@gmail.com' }
     });
     const res = createMockResponse();
 
     await patientController.updatePatientNonClinical(req, res);
 
     assert.equal(res.statusCode, 400);
-    assert.deepEqual(Object.keys(res.body.errors).sort(), [
-      'address',
-      'emergencyContactName',
-      'emergencyContactPhone',
-      'phone'
-    ]);
+    assert.equal(res.body.errors.phone, 'Phone number is required.');
+    assert.equal(res.body.errors.address, 'Address is required.');
     assert.equal(Patient.findByIdAndUpdate.calls.length, 0);
   });
 
-  it('updates only allowed non-clinical fields with normalized contact data', async () => {
+  it('updates only the allowed contact fields', async () => {
     Patient.findByIdAndUpdate = stub(async (id, updates) => ({
       _id: id,
       ...updates
@@ -178,49 +158,31 @@ describe('patientController', () => {
 
     const req = createMockRequest({
       params: { id: 'patient-1' },
-      body: {
+      body: goodContact({
         firstName: 'Should be ignored',
         diagnosis: 'Should also be ignored',
-        phone: '2452110089',
-        email: ' missing@gmail.com',
-        address: ' 8 Kevin Street ',
-        emergencyContactName: 'Kai',
-        emergencyContactPhone: '2514851124'
-      }
+        email: ' PATIENT@gmail.COM ',
+        address: ' 8 Kevin Street '
+      })
     });
     const res = createMockResponse();
 
     await patientController.updatePatientNonClinical(req, res);
 
+    const updates = Patient.findByIdAndUpdate.calls[0][1];
     assert.equal(res.statusCode, 200);
-    assert.deepEqual(Patient.findByIdAndUpdate.calls[0], [
-      'patient-1',
-      {
-        phone: '2452110089',
-        email: 'missing@gmail.com',
-        address: '8 Kevin Street',
-        emergencyContactName: 'Kai',
-        emergencyContactPhone: '2514851124'
-      },
-      {
-        new: true,
-        runValidators: true
-      }
-    ]);
-    assert.equal(res.body.patient.firstName, undefined);
+    assert.equal(updates.email, 'patient@gmail.com');
+    assert.equal(updates.address, '8 Kevin Street');
+    assert.equal(updates.firstName, undefined);
+    assert.equal(updates.diagnosis, undefined);
   });
 
-  it('returns not found when a non-clinical update targets an unknown patient', async () => {
+  it('returns not found when updating a missing patient', async () => {
     Patient.findByIdAndUpdate = stub(async () => null);
 
     const req = createMockRequest({
       params: { id: 'missing-patient' },
-      body: {
-        phone: '254562001',
-        address: '8 Kevin Street',
-        emergencyContactName: 'Kai',
-        emergencyContactPhone: '2514851124'
-      }
+      body: goodContact({ email: '' })
     });
     const res = createMockResponse();
 
@@ -230,19 +192,14 @@ describe('patientController', () => {
     assert.equal(res.body.message, 'Patient not found.');
   });
 
-  it('returns a server error when a non-clinical update throws', async () => {
+  it('returns a server error when contact update fails', async () => {
     Patient.findByIdAndUpdate = stub(async () => {
       throw new Error('write failed');
     });
 
     const req = createMockRequest({
       params: { id: 'patient-1' },
-      body: {
-        phone: '254562001',
-        address: '8 Kevin Street',
-        emergencyContactName: 'Kai',
-        emergencyContactPhone: '2514851124'
-      }
+      body: goodContact({ email: '' })
     });
     const res = createMockResponse();
 

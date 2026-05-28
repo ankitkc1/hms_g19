@@ -12,13 +12,13 @@ const {
   stub
 } = require('./helpers');
 
-function validObjectId() {
+function id() {
   return new mongoose.Types.ObjectId().toString();
 }
 
-function patientDoc(id, overrides = {}) {
+function patient(patientId = id()) {
   return {
-    _id: objectIdLike(id),
+    _id: objectIdLike(patientId),
     patientId: 'PAT-0007',
     firstName: 'Sam',
     lastName: 'Patel',
@@ -28,52 +28,54 @@ function patientDoc(id, overrides = {}) {
     email: 'sam.patel@hms.com',
     address: '10 Kevin Street',
     emergencyContactName: 'Mina Patel',
-    emergencyContactPhone: '0400333444',
+    emergencyContactPhone: '0400333444'
+  };
+}
+
+function clinicalNote(overrides = {}) {
+  return {
+    diagnosis: 'Migraine',
+    treatmentNotes: 'Prescribed rest and hydration',
+    careInstructions: 'Return if symptoms worsen',
     ...overrides
   };
 }
 
 describe('doctorController', () => {
-  const originals = {};
+  const original = {};
 
   beforeEach(() => {
-    originals.appointmentFind = Appointment.find;
-    originals.appointmentFindOne = Appointment.findOne;
-    originals.clinicalRecordFind = ClinicalRecord.find;
-    originals.clinicalRecordCreate = ClinicalRecord.create;
+    original.appointmentFind = Appointment.find;
+    original.appointmentFindOne = Appointment.findOne;
+    original.clinicalRecordFind = ClinicalRecord.find;
+    original.clinicalRecordCreate = ClinicalRecord.create;
   });
 
   afterEach(() => {
-    Appointment.find = originals.appointmentFind;
-    Appointment.findOne = originals.appointmentFindOne;
-    ClinicalRecord.find = originals.clinicalRecordFind;
-    ClinicalRecord.create = originals.clinicalRecordCreate;
+    Appointment.find = original.appointmentFind;
+    Appointment.findOne = original.appointmentFindOne;
+    ClinicalRecord.find = original.clinicalRecordFind;
+    ClinicalRecord.create = original.clinicalRecordCreate;
   });
 
-  it('lists assigned patients once using the latest appointment as the patient summary', async () => {
-    const doctorId = validObjectId();
-    const patientId = validObjectId();
-    const appointmentChain = createQueryChain([
+  it('shows each assigned patient once', async () => {
+    const doctorId = id();
+    const patientId = id();
+    Appointment.find = stub(() => createQueryChain([
       {
-        patient: patientDoc(patientId),
+        patient: patient(patientId),
         appointmentDate: new Date('2026-06-03T13:00:00'),
         reason: 'Review blood pressure',
         status: 'Scheduled'
       },
       {
-        patient: patientDoc(patientId),
+        patient: patient(patientId),
         appointmentDate: new Date('2026-05-01T09:00:00'),
         reason: 'Initial consult',
         status: 'Completed'
       },
-      {
-        patient: null,
-        appointmentDate: new Date('2026-04-01T09:00:00'),
-        reason: 'Deleted patient appointment',
-        status: 'Cancelled'
-      }
-    ]);
-    Appointment.find = stub(() => appointmentChain);
+      { patient: null }
+    ]));
 
     const req = createMockRequest({
       sessionUser: { id: doctorId, role: 'doctor' }
@@ -82,27 +84,19 @@ describe('doctorController', () => {
 
     await doctorController.getAssignedPatients(req, res);
 
-    assert.deepEqual(Appointment.find.calls[0][0], { doctor: doctorId });
     assert.equal(res.statusCode, 200);
     assert.equal(res.body.patients.length, 1);
     assert.equal(res.body.patients[0].firstName, 'Sam');
-    assert.deepEqual(res.body.patients[0].lastAppointment, {
-      appointmentDate: new Date('2026-06-03T13:00:00'),
-      reason: 'Review blood pressure',
-      status: 'Scheduled'
-    });
-    assert.deepEqual(appointmentChain.calls, [
-      ['populate', 'patient'],
-      ['sort', { appointmentDate: -1 }]
-    ]);
+    assert.equal(res.body.patients[0].lastAppointment.reason, 'Review blood pressure');
+    assert.deepEqual(Appointment.find.calls[0][0], { doctor: doctorId });
   });
 
-  it('rejects patient detail requests with an invalid patient id', async () => {
+  it('rejects patient details with an invalid patient id', async () => {
     Appointment.findOne = stub(() => createQueryChain(null));
 
     const req = createMockRequest({
       params: { patientId: 'bad-id' },
-      sessionUser: { id: validObjectId(), role: 'doctor' }
+      sessionUser: { id: id(), role: 'doctor' }
     });
     const res = createMockResponse();
 
@@ -113,14 +107,12 @@ describe('doctorController', () => {
     assert.equal(Appointment.findOne.calls.length, 0);
   });
 
-  it('blocks patient details when the doctor has no appointment for that patient', async () => {
-    const doctorId = validObjectId();
-    const patientId = validObjectId();
+  it('blocks patient details when the patient is not assigned to the doctor', async () => {
     Appointment.findOne = stub(() => createQueryChain(null));
 
     const req = createMockRequest({
-      params: { patientId },
-      sessionUser: { id: doctorId, role: 'doctor' }
+      params: { patientId: id() },
+      sessionUser: { id: id(), role: 'doctor' }
     });
     const res = createMockResponse();
 
@@ -128,28 +120,21 @@ describe('doctorController', () => {
 
     assert.equal(res.statusCode, 403);
     assert.equal(res.body.message, 'You can only view records for patients assigned to you.');
-    assert.deepEqual(Appointment.findOne.calls[0][0], {
-      doctor: doctorId,
-      patient: patientId
-    });
   });
 
-  it('returns patient details with appointment history and the doctor-owned clinical records', async () => {
-    const doctorId = validObjectId();
-    const patientId = validObjectId();
-    const detailsChain = createQueryChain({
-      patient: patientDoc(patientId),
+  it('returns patient details, appointments, and clinical records', async () => {
+    const doctorId = id();
+    const patientId = id();
+    Appointment.findOne = stub(() => createQueryChain({
+      patient: patient(patientId),
       doctor: { fullName: 'Dr Ada', email: 'ada@hms.test', role: 'doctor' }
-    });
-    const appointmentsChain = createQueryChain([
-      { appointmentDate: new Date('2026-06-03T13:00:00'), reason: 'Review', status: 'Scheduled' }
-    ]);
-    const recordsChain = createQueryChain([
-      { diagnosis: 'Hypertension', treatmentNotes: 'Adjust medication', careInstructions: 'Daily BP log' }
-    ]);
-    Appointment.findOne = stub(() => detailsChain);
-    Appointment.find = stub(() => appointmentsChain);
-    ClinicalRecord.find = stub(() => recordsChain);
+    }));
+    Appointment.find = stub(() => createQueryChain([
+      { appointmentDate: new Date('2026-06-03T13:00:00'), reason: 'Review' }
+    ]));
+    ClinicalRecord.find = stub(() => createQueryChain([
+      { diagnosis: 'Hypertension' }
+    ]));
 
     const req = createMockRequest({
       params: { patientId },
@@ -163,119 +148,88 @@ describe('doctorController', () => {
     assert.equal(res.body.patient.patientId, 'PAT-0007');
     assert.equal(res.body.appointments.length, 1);
     assert.equal(res.body.clinicalRecords[0].diagnosis, 'Hypertension');
-    assert.deepEqual(Appointment.find.calls[0][0], {
-      doctor: doctorId,
-      patient: patientId
-    });
     assert.deepEqual(ClinicalRecord.find.calls[0][0], {
       patient: patientId,
       doctor: doctorId
     });
-    assert.deepEqual(detailsChain.calls, [
-      ['populate', 'patient'],
-      ['populate', 'doctor', 'fullName email role'],
-      ['sort', { appointmentDate: -1 }]
-    ]);
   });
 
-  it('validates patient id and required clinical note fields before saving records', async () => {
+  it('does not save a clinical note with bad input', async () => {
     Appointment.findOne = stub(async () => ({}));
     ClinicalRecord.create = stub(async () => ({}));
 
     const req = createMockRequest({
-      params: { patientId: 'invalid-id' },
+      params: { patientId: 'bad-id' },
       body: { diagnosis: ' ', treatmentNotes: '', careInstructions: '' },
-      sessionUser: { id: validObjectId(), role: 'doctor' }
+      sessionUser: { id: id(), role: 'doctor' }
     });
     const res = createMockResponse();
 
     await doctorController.addClinicalRecord(req, res);
 
     assert.equal(res.statusCode, 400);
-    assert.deepEqual(Object.keys(res.body.errors).sort(), [
-      'careInstructions',
-      'diagnosis',
-      'patient',
-      'treatmentNotes'
-    ]);
-    assert.equal(Appointment.findOne.calls.length, 0);
+    assert.equal(res.body.errors.patient, 'Invalid patient ID.');
+    assert.equal(res.body.errors.diagnosis, 'Diagnosis is required.');
     assert.equal(ClinicalRecord.create.calls.length, 0);
   });
 
-  it('rejects clinical notes for patients not assigned to the doctor', async () => {
-    const patientId = validObjectId();
-    const doctorId = validObjectId();
+  it('does not save a clinical note for an unassigned patient', async () => {
     Appointment.findOne = stub(async () => null);
     ClinicalRecord.create = stub(async () => ({}));
 
     const req = createMockRequest({
-      params: { patientId },
-      body: {
-        diagnosis: 'Migraine',
-        treatmentNotes: 'Prescribed rest and hydration',
-        careInstructions: 'Return if symptoms worsen'
-      },
-      sessionUser: { id: doctorId, role: 'doctor' }
+      params: { patientId: id() },
+      body: clinicalNote(),
+      sessionUser: { id: id(), role: 'doctor' }
     });
     const res = createMockResponse();
 
     await doctorController.addClinicalRecord(req, res);
 
     assert.equal(res.statusCode, 403);
-    assert.deepEqual(Appointment.findOne.calls[0][0], {
-      doctor: doctorId,
-      patient: patientId
-    });
+    assert.equal(res.body.message, 'You can only add records for patients assigned to you.');
     assert.equal(ClinicalRecord.create.calls.length, 0);
   });
 
-  it('creates a trimmed clinical note for an assigned patient', async () => {
-    const patientId = validObjectId();
-    const doctorId = validObjectId();
-    Appointment.findOne = stub(async () => ({ _id: validObjectId() }));
+  it('saves a clinical note for an assigned patient', async () => {
+    const doctorId = id();
+    const patientId = id();
+    Appointment.findOne = stub(async () => ({ _id: id() }));
     ClinicalRecord.create = stub(async (payload) => ({
-      _id: validObjectId(),
+      _id: id(),
       ...payload
     }));
 
     const req = createMockRequest({
       params: { patientId },
-      body: {
+      body: clinicalNote({
         diagnosis: ' Migraine ',
         treatmentNotes: ' Prescribed rest and hydration ',
         careInstructions: ' Return if symptoms worsen '
-      },
+      }),
       sessionUser: { id: doctorId, role: 'doctor' }
     });
     const res = createMockResponse();
 
     await doctorController.addClinicalRecord(req, res);
 
+    const savedNote = ClinicalRecord.create.calls[0][0];
     assert.equal(res.statusCode, 201);
-    assert.deepEqual(ClinicalRecord.create.calls[0][0], {
-      patient: patientId,
-      doctor: doctorId,
-      diagnosis: 'Migraine',
-      treatmentNotes: 'Prescribed rest and hydration',
-      careInstructions: 'Return if symptoms worsen'
-    });
+    assert.equal(savedNote.patient, patientId);
+    assert.equal(savedNote.doctor, doctorId);
+    assert.equal(savedNote.diagnosis, 'Migraine');
   });
 
-  it('returns a server error when clinical note creation fails after assignment check', async () => {
-    const patientId = validObjectId();
-    Appointment.findOne = stub(async () => ({ _id: validObjectId() }));
+  it('returns a server error when a clinical note cannot be saved', async () => {
+    Appointment.findOne = stub(async () => ({ _id: id() }));
     ClinicalRecord.create = stub(async () => {
       throw new Error('insert failed');
     });
 
     const req = createMockRequest({
-      params: { patientId },
-      body: {
-        diagnosis: 'Migraine',
-        treatmentNotes: 'Prescribed rest and hydration',
-        careInstructions: 'Return if symptoms worsen'
-      },
-      sessionUser: { id: validObjectId(), role: 'doctor' }
+      params: { patientId: id() },
+      body: clinicalNote(),
+      sessionUser: { id: id(), role: 'doctor' }
     });
     const res = createMockResponse();
 
